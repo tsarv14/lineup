@@ -112,7 +112,7 @@ export default function ExampleCreatorPage() {
                   className="px-4 py-2 bg-slate-800 border border-slate-600 text-white rounded-full hover:border-primary-500 transition-colors flex items-center space-x-2"
                 >
                   <SportIcon sport={sport} className="w-5 h-5" />
-                  <span className="font-medium">{sport.toUpperCase()}</span>
+                  <span className="font-medium">{(sport as string).toUpperCase()}</span>
                 </button>
               ))}
             </div>

@@ -116,7 +116,7 @@ export default function CreatorDashboardLayout({
   }
 
   // Determine the creator's public storefront link
-  const creatorStorefrontLink = user?.storefront?.handle ? `/creator/${user.storefront.handle}` : '/creator/dashboard/store'
+  const creatorStorefrontLink = (user as any)?.storefront?.handle ? `/creator/${(user as any).storefront.handle}` : '/creator/dashboard/store'
 
   return (
     <div className="min-h-screen bg-black">
@@ -133,9 +133,9 @@ export default function CreatorDashboardLayout({
               </h1>
             </Link>
             <div className="flex items-center space-x-3">
-              {user?.storefront?.handle && (
+              {(user as any)?.storefront?.handle && (
                 <a
-                  href={`https://lineup.com/creator/${user.storefront.handle}`}
+                  href={`https://lineup.com/creator/${(user as any).storefront.handle}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-4 py-2 text-gray-300 hover:text-white hover:bg-black/40 rounded-lg transition-all border border-transparent hover:border-slate-700 text-sm font-medium flex items-center gap-2"

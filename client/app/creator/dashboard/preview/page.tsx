@@ -82,7 +82,7 @@ export default function CustomerPreviewPage() {
 
       // Fetch plans
       const plansResponse = await api.get('/creator/plans')
-      setPlans(plansResponse.data.filter((p: Plan) => !p.archived))
+      setPlans(plansResponse.data.filter((p: Plan) => !(p as any).archived))
 
       // Fetch picks
       const picksResponse = await api.get('/creator/picks')
