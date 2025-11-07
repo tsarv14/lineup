@@ -58,7 +58,7 @@ export default function Login() {
       let errorMessage = 'Login failed. Please try again.'
       
       if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
-        errorMessage = 'Cannot connect to server. Make sure the backend is running on port 5001.'
+        errorMessage = 'Cannot connect to server. Please try again later.'
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message
       } else if (error.message) {
@@ -145,9 +145,6 @@ export default function Login() {
               <Link href="/register" className="text-primary-400 hover:text-primary-300 font-semibold">
                 Sign up
               </Link>
-            </p>
-            <p className="text-sm text-gray-500 mt-4">
-              Test Capper: capper@lineup.com / password123
             </p>
           </div>
         </div>
