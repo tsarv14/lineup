@@ -22,16 +22,28 @@ require('./models/Event');
 
 const app = express();
 
-// Middleware - CORS configuration (allow all localhost ports)
+// Middleware - CORS configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',')
+  : ['http://localhost:3000', 'http://localhost:3001'];
+
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin
+    // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
-    // Allow all localhost ports
+    // Allow all localhost ports for development
     if (origin.match(/^http:\/\/localhost(:\d+)?$/)) {
       return callback(null, true);
     }
-    callback(null, true); // Allow all origins for development
+    // In production, check against allowed origins
+    if (process.env.NODE_ENV === 'production') {
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error('Not allowed by CORS'));
+    }
+    // In development, allow all origins
+    callback(null, true);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],

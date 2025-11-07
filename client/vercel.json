@@ -1,0 +1,14 @@
+{
+  "buildCommand": "cd ../client && npm run build",
+  "outputDirectory": "../client/.next",
+  "devCommand": "cd ../client && npm run dev",
+  "installCommand": "cd ../client && npm install",
+  "framework": "nextjs",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://your-backend-url.railway.app/api/:path*"
+    }
+  ]
+}
+
