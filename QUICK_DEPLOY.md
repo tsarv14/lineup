@@ -60,15 +60,17 @@ If you want better performance for your Next.js frontend:
 1. Follow steps 1-2 above (MongoDB + Railway backend)
 2. Go to https://vercel.com and sign up with GitHub
 3. Click "Add New Project" → Import your `lineup` repo
-4. Configure:
-   - **Root Directory**: `client`
-   - **Framework Preset**: Next.js (auto-detected)
-5. Add environment variable:
+4. **IMPORTANT**: Before deploying, click "Configure Project"
+5. Set **Root Directory** to `client` (click "Edit" next to Root Directory)
+6. Framework should auto-detect as Next.js
+7. Add environment variable:
    ```
    NEXT_PUBLIC_API_URL = https://your-backend-url.railway.app/api
    ```
-6. Click "Deploy"
-7. Update backend CORS: Add your Vercel URL to `ALLOWED_ORIGINS` in Railway
+8. Click "Deploy"
+9. Update backend CORS: Add your Vercel URL to `ALLOWED_ORIGINS` in Railway
+
+**If you already deployed and got an error**: Go to your project → Settings → General → Root Directory → Change to `client` → Save and redeploy
 
 ---
 

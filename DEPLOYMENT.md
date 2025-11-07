@@ -68,15 +68,19 @@ Follow Step 2 from Option 1 above.
 1. Go to [Vercel](https://vercel.com) and sign up with GitHub
 2. Click "Add New Project"
 3. Import your `lineup` repository
-4. Configure the project:
-   - **Framework Preset**: Next.js
-   - **Root Directory**: `client`
-   - **Build Command**: `npm run build` (or leave default)
-   - **Output Directory**: `.next` (or leave default)
-5. Add environment variables:
+4. **IMPORTANT**: Before clicking "Deploy", click "Configure Project"
+5. In the configuration:
+   - **Framework Preset**: Next.js (should auto-detect)
+   - **Root Directory**: Click "Edit" and set to `client` (this is critical!)
+   - **Build Command**: Leave as default (`npm run build`)
+   - **Output Directory**: Leave as default (`.next`)
+   - **Install Command**: Leave as default (`npm install`)
+6. Add environment variables:
    - `NEXT_PUBLIC_API_URL`: Your Railway backend URL (e.g., `https://your-app.railway.app/api`)
-6. Click "Deploy"
-7. Your site will be live at a Vercel URL (e.g., `your-app.vercel.app`)
+7. Click "Deploy"
+8. Your site will be live at a Vercel URL (e.g., `your-app.vercel.app`)
+
+**Note**: If you already deployed and got an error, go to Project Settings → General → Root Directory and change it to `client`, then redeploy.
 
 ---
 
