@@ -13,7 +13,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 30 second timeout for network issues
+  timeout: 60000, // 60 second timeout for Render cold starts
   withCredentials: true, // Include credentials for CORS
 })
 

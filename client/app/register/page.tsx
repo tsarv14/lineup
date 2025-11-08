@@ -42,19 +42,27 @@ export default function Register() {
       if (response.data && response.data.token) {
         login(response.data.token, response.data.user)
         toast.success('Account created successfully!')
-        // Redirect to home page after successful registration
+        // Redirect to dashboard after successful registration
         setTimeout(() => {
-          window.location.href = '/'
+          router.push('/dashboard')
         }, 500)
       } else {
         toast.error('Invalid response from server')
       }
     } catch (error: any) {
       console.error('Registration error:', error);
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.errors?.[0]?.msg ||
-                          error.message || 
-                          'Registration failed. Please try again.';
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        errorMessage = 'Request timed out. Render is waking up (this can take 30 seconds on free tier). Please try again in a moment.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.errors?.[0]?.msg) {
+        errorMessage = error.response.data.errors[0].msg;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast.error(errorMessage);
     } finally {
       setLoading(false)
