@@ -17,9 +17,9 @@ const generateToken = (userId) => {
 // @desc    Register a new user
 // @access  Public
 router.post('/register', [
-  body('username').trim().isLength({ min: 3, max: 30 }).withMessage('Username must be between 3 and 30 characters'),
   body('email').isEmail().withMessage('Please provide a valid email'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters')
+  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+  body('phoneNumber').notEmpty().withMessage('Phone number is required')
 ], async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -27,18 +27,19 @@ router.post('/register', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { username, email, password, firstName, lastName } = req.body;
+    const { email, password, firstName, lastName, phoneNumber } = req.body;
 
     // Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [{ email }, { username }]
-    });
+    const existingUser = await User.findOne({ email });
 
     if (existingUser) {
       return res.status(400).json({ 
-        message: 'User with this email or username already exists' 
+        message: 'User with this email already exists' 
       });
     }
+
+    // Generate username from email if not provided
+    const username = email.split('@')[0] + Math.floor(Math.random() * 1000);
 
     // Create new user
     const user = new User({
@@ -46,7 +47,8 @@ router.post('/register', [
       email,
       password,
       firstName,
-      lastName
+      lastName,
+      phoneNumber
     });
 
     await user.save();
