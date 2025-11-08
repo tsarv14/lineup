@@ -91,13 +91,18 @@ const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/vibely';
 console.log('🔗 Attempting to connect to MongoDB...');
 console.log('📍 URI:', mongoURI.replace(/:[^:@]+@/, ':****@')); // Hide password in logs
 
-mongoose.connect(mongoURI)
+mongoose.connect(mongoURI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
 .then(() => {
   console.log('✅ Connected to MongoDB');
+  console.log('📊 Database:', mongoose.connection.db.databaseName);
 })
 .catch((error) => {
   console.error('❌ MongoDB connection error:', error.message);
   console.error('💡 Check your .env file - make sure MONGODB_URI has your password');
+  console.error('💡 Make sure MongoDB Atlas network access allows all IPs (0.0.0.0/0)');
 });
 
 const PORT = process.env.PORT || 5000;

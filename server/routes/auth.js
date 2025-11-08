@@ -68,7 +68,18 @@ router.post('/register', [
     });
   } catch (error) {
     console.error('Registration error:', error);
-    res.status(500).json({ message: 'Server error during registration' });
+    // Send more detailed error message
+    if (error.code === 11000) {
+      // Duplicate key error
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({ 
+        message: `User with this ${field} already exists` 
+      });
+    }
+    res.status(500).json({ 
+      message: error.message || 'Server error during registration',
+      error: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 

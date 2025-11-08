@@ -49,7 +49,12 @@ export default function Register() {
         toast.error('Invalid response from server')
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Registration failed. Please try again.')
+      console.error('Registration error:', error);
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.errors?.[0]?.msg ||
+                          error.message || 
+                          'Registration failed. Please try again.';
+      toast.error(errorMessage);
     } finally {
       setLoading(false)
     }
