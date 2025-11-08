@@ -35,9 +35,17 @@ app.use(cors({
     if (origin.match(/^http:\/\/localhost(:\d+)?$/)) {
       return callback(null, true);
     }
+    // Allow all Vercel domains
+    if (origin.match(/\.vercel\.app$/) || origin.match(/\.railway\.app$/)) {
+      return callback(null, true);
+    }
     // In production, check against allowed origins
     if (process.env.NODE_ENV === 'production') {
       if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      // If no specific origins set, allow all (for easier setup)
+      if (allowedOrigins.length === 2 && allowedOrigins.includes('http://localhost:3000')) {
         return callback(null, true);
       }
       return callback(new Error('Not allowed by CORS'));
