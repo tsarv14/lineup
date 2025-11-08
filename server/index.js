@@ -99,7 +99,14 @@ const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/vibely';
 console.log('🔗 Attempting to connect to MongoDB...');
 console.log('📍 URI:', mongoURI.replace(/:[^:@]+@/, ':****@')); // Hide password in logs
 
-mongoose.connect(mongoURI, {
+// Ensure database name is in the URI
+let finalMongoURI = mongoURI;
+if (mongoURI.includes('mongodb+srv://') && !mongoURI.match(/\/[^?]+(\?|$)/)) {
+  // If no database name specified, add /vibely
+  finalMongoURI = mongoURI.replace(/\/(\?|$)/, '/vibely$1');
+}
+
+mongoose.connect(finalMongoURI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
