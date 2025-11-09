@@ -472,7 +472,7 @@ export default function CreatorStorefront() {
             <div>
               <p className="text-white text-3xl font-bold mb-6">About Us</p>
               <p className="text-gray-400 text-base leading-relaxed">
-                {storefront.aboutText || `${storefront.displayName} uses advanced sports analytics to deliver data-driven picks that win. Our experts analyze player stats, trends, and market shifts to uncover true value plays. We don't guess — we calculate. Get smarter, more confident picks and turn data into profit. ${storefront.displayName}: Where every play brings you closer to victory.`}
+                {storefront.aboutText || `${storefront.displayName} uses advanced sports analytics to deliver data-driven picks that win. Our experts analyze player stats, trends, and market shifts to uncover true value plays. We don't guess - we calculate. Get smarter, more confident picks and turn data into profit. ${storefront.displayName}: Where every play brings you closer to victory.`}
               </p>
             </div>
             <div className="relative w-full h-96 rounded-lg overflow-hidden">
