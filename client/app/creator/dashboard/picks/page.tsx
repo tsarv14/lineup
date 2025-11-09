@@ -37,9 +37,14 @@ export default function PicksPage() {
     try {
       const response = await api.get('/creator/picks')
       setPicks(response.data || [])
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching picks:', error)
-      toast.error('Failed to load picks')
+      // Only show error for actual network/server errors, not for empty states
+      if (error.response?.status >= 500 || !error.response) {
+        toast.error('Failed to load picks')
+      }
+      // For 404 or empty responses, just set empty array
+      setPicks([])
     } finally {
       setLoading(false)
     }

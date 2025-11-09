@@ -40,9 +40,14 @@ export default function PlansPage() {
     try {
       const response = await api.get('/creator/plans')
       setPlans(response.data || [])
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching plans:', error)
-      toast.error('Failed to load plans')
+      // Only show error for actual network/server errors, not for empty states
+      if (error.response?.status >= 500 || !error.response) {
+        toast.error('Failed to load plans')
+      }
+      // For 404 or empty responses, just set empty array
+      setPlans([])
     } finally {
       setLoading(false)
     }
