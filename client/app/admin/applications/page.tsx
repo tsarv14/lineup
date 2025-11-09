@@ -203,6 +203,10 @@ export default function ApplicationsPage() {
     setEditingHandle(application.handle)
     setHandleAvailable(null)
     setShowModal(true)
+    // Check initial handle availability
+    if (application.handle) {
+      checkHandleAvailability(application.handle)
+    }
   }
 
   const getStatusBadge = (status: string) => {
