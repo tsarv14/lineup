@@ -6,20 +6,22 @@ import Link from 'next/link'
 import Image from 'next/image'
 
 export default function ExampleCreatorPage() {
-  // Sample data matching VVCREW example
+  // Sample data with fake info
   const sampleStorefront = {
     displayName: 'VVCREW',
     handle: 'vvcrew',
     logoImage: '', // Placeholder - will show default
     bannerImage: '', // Placeholder - will show gradient
-    description: 'The best picks from the best experts',
+    description: 'The best picks from the best experts. We deliver winning plays backed by years of experience and advanced analytics.',
     aboutText: 'VVCREW uses advanced sports analytics to deliver data-driven picks that win. Our experts analyze player stats, trends, and market shifts to uncover true value plays. We don\'t guess - we calculate. Get smarter, more confident picks and turn data into profit. VVCREW: Where every play brings you closer to victory.',
     aboutImage: '', // Placeholder - will show default
     sports: ['Football', 'College Football', 'Baseball', 'Basketball', 'Golf', 'Soccer'],
     socialLinks: {
       twitter: 'https://twitter.com/victory_vault_',
-      instagram: '',
-      website: ''
+      instagram: 'https://instagram.com/victoryvault',
+      website: 'https://victoryvault.com',
+      tiktok: 'https://tiktok.com/@victoryvault',
+      youtube: 'https://youtube.com/@victoryvault'
     }
   }
 
@@ -35,21 +37,6 @@ export default function ExampleCreatorPage() {
       ]
     }
   ]
-
-  const getSportIcon = (sport: string) => {
-    const normalized = sport.toLowerCase()
-    if (normalized.includes('football') && !normalized.includes('college')) {
-      return (
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <g clipPath="url(#clip0_3597_24638)">
-            <path d="M22.1001 1.9001C18.6641 -1.5309 9.37211 -0.0669036 4.65211 4.6521C-0.0678849 9.3711 -1.53089 18.6641 1.90011 22.1001C3.5067 23.4495 5.57392 24.1234 7.66711 23.9801C12.0012 23.9418 16.1656 22.2904 19.3481 19.3481C24.0661 14.6291 25.5311 5.3361 22.1001 1.9001ZM16.3331 2.0001C17.8971 1.87475 19.4509 2.34398 20.6841 3.3141C21.7001 4.3311 22.1111 6.3001 21.9591 8.5451L15.4591 2.0451C15.7541 2.0261 16.0501 2.0001 16.3331 2.0001ZM3.31611 20.6841C2.30011 19.6691 1.88911 17.7001 2.04111 15.4551L8.54111 21.9551C6.30011 22.1101 4.33111 21.7001 3.31611 20.6841ZM17.9341 17.9341C15.9983 19.7581 13.6033 21.0221 11.0051 21.5911L2.40511 12.9911C2.97541 10.3937 4.24084 8.00005 6.06611 6.0661C8.00514 4.24268 10.4044 2.98218 13.0061 2.4201L21.5921 11.0061C21.0232 13.6043 19.7588 15.999 17.9341 17.9341ZM17.7071 11.7071C17.5196 11.8946 17.2653 11.9999 17.0001 11.9999C16.735 11.9999 16.4806 11.8946 16.2931 11.7071L15.0001 10.4141L13.4141 12.0001L14.7071 13.2931C14.8026 13.3853 14.8788 13.4957 14.9312 13.6177C14.9836 13.7397 15.0112 13.8709 15.0124 14.0037C15.0135 14.1365 14.9882 14.2682 14.9379 14.3911C14.8877 14.5139 14.8134 14.6256 14.7195 14.7195C14.6256 14.8134 14.514 14.8876 14.3911 14.9379C14.2682 14.9882 14.1365 15.0135 14.0037 15.0123C13.8709 15.0112 13.7397 14.9836 13.6177 14.9312C13.4957 14.8788 13.3854 14.8026 13.2931 14.7071L12.0001 13.4141L10.4141 15.0001L11.7071 16.2931C11.8026 16.3853 11.8788 16.4957 11.9312 16.6177C11.9836 16.7397 12.0112 16.8709 12.0124 17.0037C12.0135 17.1365 11.9882 17.2682 11.9379 17.3911C11.8877 17.5139 11.8134 17.6256 11.7195 17.7195C11.6256 17.8134 11.514 17.8876 11.3911 17.9379C11.2682 17.9882 11.1365 18.0135 11.0037 18.0123C10.8709 18.0112 10.7397 17.9836 10.6177 17.9312C10.4957 17.8788 10.3854 17.8026 10.2931 17.7071L6.29312 13.7071C6.11096 13.5185 6.01016 13.2659 6.01244 13.0037C6.01472 12.7415 6.11989 12.4907 6.3053 12.3053C6.4907 12.1199 6.74152 12.0147 7.00371 12.0124C7.26591 12.0101 7.51851 12.1109 7.70711 12.2931L9.00011 13.5861L10.5861 12.0001L9.29311 10.7071C9.11096 10.5185 9.01016 10.2659 9.01244 10.0037C9.01472 9.7415 9.11989 9.49069 9.3053 9.30528C9.4907 9.11987 9.74152 9.0147 10.0037 9.01242C10.2659 9.01015 10.5185 9.11094 10.7071 9.2931L12.0001 10.5861L13.5861 9.0001L12.2931 7.7071C12.111 7.51849 12.0102 7.26589 12.0124 7.0037C12.0147 6.7415 12.1199 6.49069 12.3053 6.30528C12.4907 6.11987 12.7415 6.0147 13.0037 6.01242C13.2659 6.01014 13.5185 6.11094 13.7071 6.2931L17.7071 10.2931C17.8946 10.4806 17.9999 10.7349 17.9999 11.0001C17.9999 11.2653 17.8946 11.5196 17.7071 11.7071Z" fill="#0A0A0A"></path>
-          </g>
-        </svg>
-      )
-    }
-    // Add more sport icons as needed
-    return null
-  }
 
   const formatPrice = (cents: number) => {
     return `$${(cents / 100).toFixed(2)}`
@@ -68,191 +55,176 @@ export default function ExampleCreatorPage() {
       <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header Section */}
-        <div className="pt-8 pb-6">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <div className="relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
-                {sampleStorefront.logoImage ? (
-                  <Image
-                    src={sampleStorefront.logoImage}
-                    alt="Storefront Logo"
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-primary-500 flex items-center justify-center text-white text-2xl font-bold">
-                    {sampleStorefront.displayName.charAt(0)}
-                  </div>
-                )}
-              </div>
-              <p className="text-white text-xl font-semibold">{sampleStorefront.displayName}</p>
-              <div className="flex items-center gap-2">
-                <Link
-                  href="/creator/example/picks"
-                  className="px-4 py-2 bg-transparent border border-white/20 text-white rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  <p className="text-sm font-medium">See Picks</p>
-                </Link>
-                {sampleStorefront.socialLinks?.twitter && (
-                  <a
-                    href={sampleStorefront.socialLinks.twitter}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                  >
-                    <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="w-5 h-5 text-white">
-                      <path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"></path>
-                    </svg>
-                  </a>
-                )}
-              </div>
-            </div>
-            {samplePlans.length > 0 && (
-              <button className="px-6 py-3 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-semibold flex items-center gap-2">
-                Subscribe
-                <span className="text-sm font-normal text-gray-600">
-                  {formatPrice(samplePlans[0].billingVariants[0].priceCents)} per {samplePlans[0].billingVariants[0].interval === 'day' ? '14 days' : getIntervalText(samplePlans[0].billingVariants[0].interval)}
-                </span>
-                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
-                  <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"></path>
-                </svg>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Banner Section */}
-        <div className="relative w-full h-64 md:h-96 mb-8 rounded-lg overflow-hidden">
+        {/* Banner Section - Moved to Top */}
+        <div className="relative w-full h-48 md:h-72 mb-8 rounded-lg overflow-hidden group mt-8">
           {sampleStorefront.bannerImage ? (
-            <Image
-              src={sampleStorefront.bannerImage}
-              alt="Storefront Banner"
-              fill
-              className="object-cover"
-            />
+            <>
+              <Image
+                src={sampleStorefront.bannerImage}
+                alt="Storefront Banner"
+                fill
+                className="object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+            </>
           ) : (
             <div className="w-full h-full bg-gradient-to-r from-primary-600 to-primary-800"></div>
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
         </div>
 
-        {/* Storefront Info Section */}
-        <div className="mb-12">
-          <div className="flex items-center gap-4 mb-6">
-            <Link href="/creator/example" className="flex items-center gap-4">
-              <div className="relative w-16 h-16 rounded-full overflow-hidden">
-                {sampleStorefront.logoImage ? (
-                  <Image
-                    src={sampleStorefront.logoImage}
-                    alt="Store Logo"
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-primary-500 flex items-center justify-center text-white text-2xl font-bold">
-                    {sampleStorefront.displayName.charAt(0)}
-                  </div>
-                )}
-              </div>
-              <p className="text-white text-2xl font-bold">{sampleStorefront.displayName}</p>
-            </Link>
-          </div>
-          
-          <div className="space-y-4 mb-6">
-            <p className="text-white text-lg font-semibold">
-              {sampleStorefront.description}
-            </p>
-            <p className="text-gray-400 text-base">
-              Where sports bettors become winners. Let's win more together. Subscribe today!
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4 flex-wrap">
-            {samplePlans.length > 0 && (
-              <div className="flex gap-2">
-                {samplePlans.map((plan) => (
-                  <button
-                    key={plan._id}
-                    className="px-6 py-3 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-semibold"
-                  >
-                    Subscribe
-                    <span className="block text-xs font-normal mt-1">
-                      {formatPrice(plan.billingVariants[0].priceCents)} per {plan.billingVariants[0].interval === 'day' ? '14 days' : getIntervalText(plan.billingVariants[0].interval)}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-            <div className="flex items-center gap-2">
-              <Link
-                href="/creator/example/picks"
-                className="px-4 py-2 bg-transparent border border-white/20 text-white rounded-lg hover:bg-white/10 transition-colors"
-              >
-                <p className="text-sm font-medium">See Picks</p>
-              </Link>
-              <Link
-                href="/login?redirect_url=/creator/example"
-                className="px-4 py-2 bg-transparent border border-white/20 text-white rounded-lg hover:bg-white/10 transition-colors"
-              >
-                <p className="text-sm font-medium">Login</p>
-              </Link>
-              {sampleStorefront.socialLinks?.twitter && (
-                <a
-                  href={sampleStorefront.socialLinks.twitter}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 border border-white/20 rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="w-5 h-5 text-white">
-                    <path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"></path>
-                  </svg>
-                </a>
+        {/* Store Name Section - Underneath Banner */}
+        <div className="mb-12 text-center relative">
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <div className="relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0">
+              {sampleStorefront.logoImage ? (
+                <Image
+                  src={sampleStorefront.logoImage}
+                  alt="Storefront Logo"
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-primary-500 flex items-center justify-center text-white text-3xl font-bold">
+                  {sampleStorefront.displayName.charAt(0)}
+                </div>
+              )}
+            </div>
+            <div className="flex-1 max-w-md">
+              <p className="text-white text-3xl font-bold">{sampleStorefront.displayName}</p>
+              {sampleStorefront.handle && (
+                <p className="text-gray-400 text-sm mt-1">@{sampleStorefront.handle}</p>
               )}
             </div>
           </div>
         </div>
 
-        {/* Subscription Plans Section */}
-        <div id="subscription-plans" className="mb-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-            {samplePlans.map((plan) => (
-              <div key={plan._id} className="bg-slate-900 border border-slate-800 rounded-lg p-6">
-                <div className="mb-4">
-                  <p className="text-white text-xl font-semibold mb-2">{plan.name}</p>
-                  {plan.freeTrialDays > 0 && (
-                    <p className="text-primary-400 text-sm">{plan.freeTrialDays} day Free Trial</p>
-                  )}
-                </div>
-                <div className="mb-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <p className="text-white text-3xl font-bold">
-                      {formatPrice(plan.billingVariants[0].priceCents)}
-                    </p>
-                    {plan.billingVariants.length > 1 && (
-                      <select className="bg-slate-800 text-white border border-slate-700 rounded px-2 py-1 text-sm">
-                        {plan.billingVariants.map((variant) => (
-                          <option key={variant._id} value={variant._id}>
-                            {variant.interval === 'day' ? '14 days' : getIntervalText(variant.interval)}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-                  {plan.description && (
-                    <p className="text-gray-400 text-sm mb-4">{plan.description}</p>
-                  )}
-                </div>
-                <Link
-                  href="/creator/example/subscribe/1"
-                  className="block w-full text-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold"
-                >
-                  Subscribe
-                </Link>
-              </div>
-            ))}
+        {/* Description Section */}
+        <div className="mb-12 bg-slate-900/50 rounded-lg p-8 border border-slate-800">
+          <div className="text-center">
+            <p className="text-white text-lg font-semibold mb-4">
+              {sampleStorefront.description}
+            </p>
           </div>
         </div>
+
+        {/* About Text Section */}
+        <div className="mb-12 bg-slate-900/50 rounded-lg p-8 border border-slate-800">
+          <div className="text-center">
+            <p className="text-gray-300 text-base leading-relaxed mb-4 whitespace-pre-wrap">
+              {sampleStorefront.aboutText}
+            </p>
+          </div>
+        </div>
+
+        {/* Social Links Section */}
+        <div className="mb-12 bg-slate-900/50 rounded-lg p-8 border border-slate-800">
+          <div className="text-center mb-6">
+            <h3 className="text-white text-xl font-semibold mb-2">Connect With Us</h3>
+            <p className="text-gray-400 text-sm">Add your social media links to stay connected</p>
+          </div>
+          
+          <div className="flex items-center justify-center gap-6 flex-wrap">
+            {sampleStorefront.socialLinks?.twitter && (
+              <a
+                href={sampleStorefront.socialLinks.twitter}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors group"
+              >
+                <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="w-6 h-6 text-white group-hover:text-primary-400">
+                  <path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"></path>
+                </svg>
+                <span className="text-white font-medium group-hover:text-primary-400">Twitter</span>
+              </a>
+            )}
+            {sampleStorefront.socialLinks?.instagram && (
+              <a
+                href={sampleStorefront.socialLinks.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors group"
+              >
+                <svg className="w-6 h-6 text-white group-hover:text-primary-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                </svg>
+                <span className="text-white font-medium group-hover:text-primary-400">Instagram</span>
+              </a>
+            )}
+            {sampleStorefront.socialLinks?.website && (
+              <a
+                href={sampleStorefront.socialLinks.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors group"
+              >
+                <svg className="w-6 h-6 text-white group-hover:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                </svg>
+                <span className="text-white font-medium group-hover:text-primary-400">Website</span>
+              </a>
+            )}
+            {sampleStorefront.socialLinks?.tiktok && (
+              <a
+                href={sampleStorefront.socialLinks.tiktok}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors group"
+              >
+                <svg className="w-6 h-6 text-white group-hover:text-primary-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                </svg>
+                <span className="text-white font-medium group-hover:text-primary-400">TikTok</span>
+              </a>
+            )}
+            {sampleStorefront.socialLinks?.youtube && (
+              <a
+                href={sampleStorefront.socialLinks.youtube}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors group"
+              >
+                <svg className="w-6 h-6 text-white group-hover:text-primary-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                </svg>
+                <span className="text-white font-medium group-hover:text-primary-400">YouTube</span>
+              </a>
+            )}
+          </div>
+        </div>
+
+        {/* Subscription Plans Section */}
+        {samplePlans.length > 0 && (
+          <div id="subscription-plans" className="mb-16">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+              {samplePlans.slice(0, 3).map((plan) => (
+                <div key={plan._id} className="bg-slate-900 border border-slate-800 rounded-lg p-6">
+                  <div className="mb-4">
+                    <p className="text-white text-xl font-semibold mb-2">{plan.name}</p>
+                    {plan.freeTrialDays > 0 && (
+                      <p className="text-primary-400 text-sm">{plan.freeTrialDays} day Free Trial</p>
+                    )}
+                  </div>
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <p className="text-white text-3xl font-bold">
+                        {plan.billingVariants.length > 0 ? formatPrice(plan.billingVariants[0].priceCents) : 'N/A'}
+                      </p>
+                    </div>
+                    {plan.description && (
+                      <p className="text-gray-400 text-sm mb-4">{plan.description}</p>
+                    )}
+                  </div>
+                  <Link
+                    href="/creator/example/subscribe/1"
+                    className="block w-full text-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold"
+                  >
+                    Subscribe
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* How It Works Section */}
         <div className="mb-16">
@@ -313,9 +285,9 @@ export default function ExampleCreatorPage() {
         </div>
 
         {/* About Us Section */}
-        <div className="mb-16">
+        <div className="mb-16 relative group">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <div>
+            <div className="relative">
               <p className="text-white text-3xl font-bold mb-6">About Us</p>
               <p className="text-gray-400 text-base leading-relaxed">
                 {sampleStorefront.aboutText}
@@ -330,9 +302,10 @@ export default function ExampleCreatorPage() {
                   className="object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                  <div className="text-6xl font-bold text-primary-400/20">
-                    {sampleStorefront.displayName.charAt(0)}
+                <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center relative">
+                  <div className="text-center px-6">
+                    <p className="text-gray-400 text-sm mb-2">Add extra photos and wins here</p>
+                    <p className="text-gray-500 text-xs">Showcase your success stories and build credibility with potential subscribers</p>
                   </div>
                 </div>
               )}
@@ -346,15 +319,18 @@ export default function ExampleCreatorPage() {
           
           {/* Sport Filter */}
           <div className="flex flex-wrap gap-3 mb-8">
-            {sampleStorefront.sports.map((sport) => (
-              <button
-                key={sport}
-                className="px-4 py-2 rounded-full transition-colors flex items-center gap-2 bg-slate-900 border border-slate-800 text-white hover:border-primary-500"
-              >
-                {getSportIcon(sport)}
-                <span className="text-sm font-medium">{sport}</span>
-              </button>
-            ))}
+            {sampleStorefront.sports && sampleStorefront.sports.length > 0 ? (
+              sampleStorefront.sports.map((sport) => (
+                <button
+                  key={sport}
+                  className="px-4 py-2 rounded-full transition-colors flex items-center gap-2 bg-slate-900 border border-slate-800 text-white hover:border-primary-500"
+                >
+                  <span className="text-sm font-medium">{sport}</span>
+                </button>
+              ))
+            ) : (
+              <p className="text-gray-400 text-sm">No sports selected yet</p>
+            )}
           </div>
 
           {/* Picks Placeholder */}

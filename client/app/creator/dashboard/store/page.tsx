@@ -814,7 +814,7 @@ export default function StorePage() {
                 />
               ) : (
                 <p className="text-gray-400 text-base leading-relaxed">
-                  {formData.aboutText || ''}
+                  {formData.aboutText || 'Share your story, expertise, and what makes your picks special. This section helps potential subscribers understand who you are and why they should trust your picks.'}
                 </p>
               )}
             </div>
