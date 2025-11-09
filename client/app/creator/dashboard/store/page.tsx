@@ -293,10 +293,10 @@ export default function StorePage() {
           </div>
           {/* Edit buttons for header section */}
           {editingSection !== 'logo' && editingSection !== 'info' && (
-            <div className="absolute top-0 right-0 flex gap-2">
+            <div className="absolute top-0 right-0 flex gap-2 z-10">
               <button
                 onClick={() => setEditingSection('logo')}
-                className="px-3 py-1.5 bg-slate-800/90 backdrop-blur-sm text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1.5"
+                className="px-3 py-1.5 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1.5 border border-slate-700"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -305,7 +305,7 @@ export default function StorePage() {
               </button>
               <button
                 onClick={() => setEditingSection('info')}
-                className="px-3 py-1.5 bg-slate-800/90 backdrop-blur-sm text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1.5"
+                className="px-3 py-1.5 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1.5 border border-slate-700"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -347,7 +347,7 @@ export default function StorePage() {
           {editingSection !== 'banner' && (
             <button
               onClick={() => setEditingSection('banner')}
-              className="absolute top-4 right-4 px-3 py-2 bg-slate-800/90 backdrop-blur-sm text-white rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium flex items-center gap-2"
+              className="absolute top-4 right-4 px-3 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium flex items-center gap-2 border border-slate-700 z-10"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -385,54 +385,58 @@ export default function StorePage() {
           </div>
           
           <div className="space-y-4 mb-6">
-            {editingSection === 'description' ? (
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Description"
-                className="w-full text-white text-lg font-semibold bg-slate-800 border border-primary-500 rounded px-3 py-2"
-                rows={2}
-              />
-            ) : (
-              <div className="relative group/desc">
-                <p className="text-white text-lg font-semibold">
-                  {formData.description || 'The best picks from the best experts'}
-                </p>
-                <button
-                  onClick={() => setEditingSection('description')}
-                  className="absolute -right-10 top-0 px-2 py-1 bg-slate-800/90 backdrop-blur-sm text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1 opacity-0 group-hover/desc:opacity-100"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Edit
-                </button>
-              </div>
-            )}
-            {editingSection === 'about' ? (
-              <textarea
-                value={formData.aboutText}
-                onChange={(e) => setFormData(prev => ({ ...prev, aboutText: e.target.value }))}
-                placeholder="About text"
-                className="w-full text-gray-400 text-base bg-slate-800 border border-primary-500 rounded px-3 py-2"
-                rows={4}
-              />
-            ) : (
-              <div className="relative group/about">
-                <p className="text-gray-400 text-base">
-                  {formData.aboutText || 'Where sports bettors become winners. Let\'s win more together. Subscribe today!'}
-                </p>
-                <button
-                  onClick={() => setEditingSection('about')}
-                  className="absolute -right-10 top-0 px-2 py-1 bg-slate-800/90 backdrop-blur-sm text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1 opacity-0 group-hover/about:opacity-100"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                  Edit
-                </button>
-              </div>
-            )}
+            <div className="relative group/desc">
+              {editingSection === 'description' ? (
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Description"
+                  className="w-full text-white text-lg font-semibold bg-slate-800 border border-primary-500 rounded px-3 py-2"
+                  rows={2}
+                />
+              ) : (
+                <>
+                  <p className="text-white text-lg font-semibold">
+                    {formData.description || 'The best picks from the best experts'}
+                  </p>
+                  <button
+                    onClick={() => setEditingSection('description')}
+                    className="absolute -right-12 top-0 px-2 py-1 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1 border border-slate-700"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit
+                  </button>
+                </>
+              )}
+            </div>
+            <div className="relative group/about-text">
+              {editingSection === 'about' ? (
+                <textarea
+                  value={formData.aboutText}
+                  onChange={(e) => setFormData(prev => ({ ...prev, aboutText: e.target.value }))}
+                  placeholder="About text"
+                  className="w-full text-gray-400 text-base bg-slate-800 border border-primary-500 rounded px-3 py-2"
+                  rows={4}
+                />
+              ) : (
+                <>
+                  <p className="text-gray-400 text-base">
+                    {formData.aboutText || 'Where sports bettors become winners. Let\'s win more together. Subscribe today!'}
+                  </p>
+                  <button
+                    onClick={() => setEditingSection('about')}
+                    className="absolute -right-12 top-0 px-2 py-1 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1 border border-slate-700"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-4 flex-wrap">
@@ -489,7 +493,7 @@ export default function StorePage() {
               {editingSection !== 'social' && (
                 <button
                   onClick={() => setEditingSection('social')}
-                  className="px-2 py-1 bg-slate-800/90 backdrop-blur-sm text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1"
+                  className="px-2 py-1 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1 border border-slate-700"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -606,8 +610,21 @@ export default function StorePage() {
         {/* About Us Section */}
         <div className="mb-16 relative group">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <div className="relative group/about-text">
-              <p className="text-white text-3xl font-bold mb-6">About Us</p>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-6">
+                <p className="text-white text-3xl font-bold">About Us</p>
+                {editingSection !== 'about' && (
+                  <button
+                    onClick={() => setEditingSection('about')}
+                    className="px-2 py-1 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1 border border-slate-700"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit About
+                  </button>
+                )}
+              </div>
               {editingSection === 'about' ? (
                 <textarea
                   value={formData.aboutText}
@@ -617,23 +634,12 @@ export default function StorePage() {
                   rows={8}
                 />
               ) : (
-                <>
-                  <p className="text-gray-400 text-base leading-relaxed">
-                    {formData.aboutText || `${formData.displayName || 'Your store'} uses advanced sports analytics to deliver data-driven picks that win. Our experts analyze player stats, trends, and market shifts to uncover true value plays. We don't guess - we calculate. Get smarter, more confident picks and turn data into profit. ${formData.displayName || 'Your store'}: Where every play brings you closer to victory.`}
-                  </p>
-                  <button
-                    onClick={() => setEditingSection('about')}
-                    className="absolute top-0 right-0 px-2 py-1 bg-slate-800/90 backdrop-blur-sm text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1 opacity-0 group-hover/about-text:opacity-100"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Edit
-                  </button>
-                </>
+                <p className="text-gray-400 text-base leading-relaxed">
+                  {formData.aboutText || `${formData.displayName || 'Your store'} uses advanced sports analytics to deliver data-driven picks that win. Our experts analyze player stats, trends, and market shifts to uncover true value plays. We don't guess - we calculate. Get smarter, more confident picks and turn data into profit. ${formData.displayName || 'Your store'}: Where every play brings you closer to victory.`}
+                </p>
               )}
             </div>
-            <div className="relative w-full h-96 rounded-lg overflow-hidden group/about-img">
+            <div className="relative w-full h-96 rounded-lg overflow-hidden">
               {editingSection === 'aboutImage' ? (
                 <div className="w-full h-full bg-slate-800 border-2 border-primary-500 flex items-center justify-center">
                   <input
@@ -657,7 +663,7 @@ export default function StorePage() {
                   />
                   <button
                     onClick={() => setEditingSection('aboutImage')}
-                    className="absolute top-4 right-4 px-3 py-2 bg-slate-800/90 backdrop-blur-sm text-white rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium flex items-center gap-2 opacity-0 group-hover/about-img:opacity-100"
+                    className="absolute top-4 right-4 px-3 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium flex items-center gap-2 border border-slate-700 z-10"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -666,13 +672,13 @@ export default function StorePage() {
                   </button>
                 </>
               ) : (
-                <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                <div className="w-full h-full bg-slate-800 flex items-center justify-center relative">
                   <div className="text-6xl font-bold text-primary-400/20">
                     {formData.displayName?.charAt(0) || user?.username?.charAt(0) || 'S'}
                   </div>
                   <button
                     onClick={() => setEditingSection('aboutImage')}
-                    className="absolute inset-0 bg-black/60 opacity-0 group-hover/about-img:opacity-100 transition-opacity flex items-center justify-center"
+                    className="absolute inset-0 bg-black/60 flex items-center justify-center hover:bg-black/70 transition-colors"
                   >
                     <span className="text-white text-sm px-3 py-2 bg-primary-600 rounded hover:bg-primary-700">Add Image</span>
                   </button>
