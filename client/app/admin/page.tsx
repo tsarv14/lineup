@@ -7,11 +7,21 @@ import Link from 'next/link'
 
 export default function AdminDashboard() {
   const router = useRouter()
-  const { user, loading: authLoading } = useAuth()
+  const { user, loading: authLoading, checkAuth } = useAuth()
+
+  useEffect(() => {
+    // Force refresh user data from server
+    if (!authLoading) {
+      checkAuth()
+    }
+  }, [])
 
   useEffect(() => {
     if (!authLoading && (!user || !user.roles?.includes('admin'))) {
-      router.push('/')
+      // Add a small delay to show message
+      setTimeout(() => {
+        router.push('/')
+      }, 1000)
       return
     }
   }, [user, authLoading, router])
@@ -25,7 +35,20 @@ export default function AdminDashboard() {
   }
 
   if (!user || !user.roles?.includes('admin')) {
-    return null
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+          <p className="text-gray-400 mb-2">Checking admin access...</p>
+          <p className="text-gray-500 text-sm">
+            {!user ? 'Not logged in' : `Current roles: ${user.roles?.join(', ') || 'none'}`}
+          </p>
+          <p className="text-gray-500 text-xs mt-2">
+            If you just granted admin access, please log out and log back in.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
