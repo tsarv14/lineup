@@ -31,6 +31,12 @@ router.post('/', [
 
     const { handle, displayName, email, phoneNumber, socialLinks, experience, whyCreator, sports } = req.body;
 
+    // Get user ID if authenticated
+    let userId = null;
+    if (req.user) {
+      userId = req.user._id;
+    }
+
     // Normalize handle
     const normalizedHandle = handle.toLowerCase().trim();
 
@@ -55,9 +61,7 @@ router.post('/', [
     }
 
     // Check if user already has an application
-    let userId = null;
-    if (req.user) {
-      userId = req.user._id;
+    if (userId) {
       const existingUserApplication = await CreatorApplication.findOne({
         user: userId,
         status: { $in: ['pending', 'approved'] }
