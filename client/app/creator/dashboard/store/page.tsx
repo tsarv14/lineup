@@ -50,6 +50,21 @@ export default function StorePage() {
     fetchPlans()
   }, [])
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && editingSection) {
+        setEditingSection(null)
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 's' && editingSection) {
+        e.preventDefault()
+        handleSave()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [editingSection])
+
   const fetchStorefront = async () => {
     try {
       const response = await api.get('/creator/storefront')
@@ -329,20 +344,34 @@ export default function StorePage() {
                 )}
               </div>
               {editingSection === 'info' ? (
-                <input
-                  type="text"
-                  value={formData.displayName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
-                  placeholder="Display Name"
-                  className="text-white text-2xl font-bold bg-slate-800 border border-primary-500 rounded px-2 py-1"
-                />
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="text"
+                    value={formData.handle}
+                    onChange={(e) => setFormData(prev => ({ ...prev, handle: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
+                    placeholder="Handle (URL slug)"
+                    className="text-white text-sm bg-slate-800 border border-primary-500 rounded px-2 py-1"
+                  />
+                  <input
+                    type="text"
+                    value={formData.displayName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
+                    placeholder="Display Name"
+                    className="text-white text-2xl font-bold bg-slate-800 border border-primary-500 rounded px-2 py-1"
+                  />
+                </div>
               ) : (
-                <p 
-                  className="text-white text-2xl font-bold cursor-pointer hover:text-primary-400"
+                <div 
+                  className="cursor-pointer hover:text-primary-400"
                   onClick={() => setEditingSection('info')}
                 >
-                  {formData.displayName || 'Your Store Name'}
-                </p>
+                  <p className="text-white text-2xl font-bold">
+                    {formData.displayName || 'Your Store Name'}
+                  </p>
+                  {formData.handle && (
+                    <p className="text-gray-400 text-sm">@{formData.handle}</p>
+                  )}
+                </div>
               )}
             </div>
           </div>
