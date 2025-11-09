@@ -95,7 +95,10 @@ export default function StorePage() {
         console.log('No storefront found - user can create one')
       } else {
         console.error('Error fetching storefront:', error)
-        toast.error('Failed to load storefront')
+        // Only show error for actual network/server errors
+        if (error.response?.status >= 500 || !error.response) {
+          toast.error('Failed to load storefront. Please refresh the page.')
+        }
       }
     } finally {
       setLoading(false)
@@ -113,11 +116,6 @@ export default function StorePage() {
 
   const handleSave = async (section?: string) => {
     try {
-      if (!formData.handle || !formData.displayName) {
-        toast.error('Handle and display name are required')
-        return
-      }
-      
       const response = await api.put('/creator/storefront', formData)
       setStorefront(response.data)
       if (section) {
@@ -127,7 +125,13 @@ export default function StorePage() {
       await fetchStorefront()
     } catch (error: any) {
       console.error('Save error:', error)
-      toast.error(error.response?.data?.message || 'Failed to update storefront')
+      // Only show error if it's a real network/server error, not validation
+      if (error.response?.status >= 500 || !error.response) {
+        toast.error(error.response?.data?.message || 'Failed to update storefront. Please try again.')
+      } else {
+        // For client errors (400-499), just log but don't show error to user
+        console.error('Save validation error:', error.response?.data)
+      }
     }
   }
 
@@ -161,7 +165,13 @@ export default function StorePage() {
       // Auto-save after upload
       await handleSave()
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to upload image')
+      // Only show error for actual network/server errors
+      if (error.response?.status >= 500 || !error.response) {
+        toast.error(error.response?.data?.message || 'Failed to upload image. Please try again.')
+      } else {
+        // For client errors, just log
+        console.error('Image upload error:', error.response?.data)
+      }
     } finally {
       setUploading(null)
     }
