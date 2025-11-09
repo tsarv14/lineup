@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import api from '@/lib/api'
@@ -15,6 +15,8 @@ export default function ApplyPage() {
   const [checkingHandle, setCheckingHandle] = useState(false)
   const [handleAvailable, setHandleAvailable] = useState<boolean | null>(null)
   const [showSocialModal, setShowSocialModal] = useState(false)
+  const handleCheckTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const currentCheckRef = useRef<string>('')
   const [formData, setFormData] = useState({
     handle: '',
     displayName: '',
@@ -46,24 +48,39 @@ export default function ApplyPage() {
   const checkHandleAvailability = async (handle: string) => {
     if (!handle || handle.length < 3) {
       setHandleAvailable(null)
+      currentCheckRef.current = ''
       return
     }
 
     const normalizedHandle = handle.toLowerCase().trim().replace(/[^a-z0-9-]/g, '')
     if (normalizedHandle !== handle.toLowerCase().trim()) {
       setHandleAvailable(false)
+      currentCheckRef.current = ''
       return
     }
 
+    // Track which handle we're checking
+    currentCheckRef.current = normalizedHandle
     setCheckingHandle(true)
+    
     try {
       const response = await api.get(`/applications/check-handle/${normalizedHandle}`)
-      setHandleAvailable(response.data.available)
+      // Only update state if this is still the current check (avoid race conditions)
+      if (currentCheckRef.current === normalizedHandle) {
+        setHandleAvailable(response.data.available)
+      }
     } catch (error) {
       console.error('Error checking handle:', error)
-      setHandleAvailable(null)
+      // Only update state if this is still the current check
+      if (currentCheckRef.current === normalizedHandle) {
+        setHandleAvailable(null)
+      }
     } finally {
-      setCheckingHandle(false)
+      // Only update loading state if this is still the current check
+      if (currentCheckRef.current === normalizedHandle) {
+        setCheckingHandle(false)
+        currentCheckRef.current = ''
+      }
     }
   }
 
@@ -71,13 +88,29 @@ export default function ApplyPage() {
     const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')
     setFormData(prev => ({ ...prev, handle: value }))
     
+    // Clear any existing timeout
+    if (handleCheckTimeoutRef.current) {
+      clearTimeout(handleCheckTimeoutRef.current)
+    }
+    
+    // Reset availability state immediately
+    setHandleAvailable(null)
+    currentCheckRef.current = ''
+    
     // Debounce handle check
-    const timeoutId = setTimeout(() => {
+    handleCheckTimeoutRef.current = setTimeout(() => {
       checkHandleAvailability(value)
     }, 500)
-    
-    return () => clearTimeout(timeoutId)
   }
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (handleCheckTimeoutRef.current) {
+        clearTimeout(handleCheckTimeoutRef.current)
+      }
+    }
+  }, [])
 
   const handleSportToggle = (sport: string) => {
     setFormData(prev => {
