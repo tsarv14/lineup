@@ -14,7 +14,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
   timeout: 60000, // 60 second timeout for Render cold starts
-  withCredentials: true, // Include credentials for CORS
+  // Removed withCredentials - not needed for JWT token auth
 })
 
 // Add token to requests
