@@ -39,9 +39,9 @@ export default function Login() {
       if (response.data && response.data.token) {
         login(response.data.token, response.data.user)
         toast.success('Welcome back!')
-        // Redirect to home page after successful login
+        // Redirect to dashboard after successful login
         setTimeout(() => {
-          window.location.href = '/'
+          router.push('/dashboard')
         }, 500)
       } else {
         toast.error('Invalid response from server')
@@ -60,8 +60,12 @@ export default function Login() {
       
       if (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error')) {
         errorMessage = 'Cannot connect to server. Please try again later.'
+      } else if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        errorMessage = 'Request timed out. Render is waking up (this can take 30 seconds on free tier). Please try again in a moment.'
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message
+      } else if (error.response?.data?.errors?.[0]?.msg) {
+        errorMessage = error.response.data.errors[0].msg
       } else if (error.message) {
         errorMessage = error.message
       }
