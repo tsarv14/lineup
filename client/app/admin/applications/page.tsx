@@ -53,6 +53,10 @@ export default function ApplicationsPage() {
   const [actionLoading, setActionLoading] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
   const [adminNotes, setAdminNotes] = useState('')
+  const [editingHandle, setEditingHandle] = useState('')
+  const [checkingHandle, setCheckingHandle] = useState(false)
+  const [handleAvailable, setHandleAvailable] = useState<boolean | null>(null)
+  const [handleCheckTimeout, setHandleCheckTimeout] = useState<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     if (!authLoading && (!user || !user.roles?.includes('admin'))) {
@@ -80,17 +84,36 @@ export default function ApplicationsPage() {
   }
 
   const handleApprove = async (applicationId: string) => {
+    // Validate handle if it was changed
+    if (editingHandle !== selectedApplication?.handle) {
+      if (!editingHandle || editingHandle.length < 3) {
+        toast.error('Handle must be at least 3 characters')
+        return
+      }
+      if (handleAvailable === false) {
+        toast.error('Please choose an available handle')
+        return
+      }
+      if (checkingHandle) {
+        toast.error('Please wait for handle availability check to complete')
+        return
+      }
+    }
+
     if (!confirm('Are you sure you want to approve this application?')) return
 
     setActionLoading(true)
     try {
       await api.put(`/applications/${applicationId}/approve`, {
+        handle: editingHandle !== selectedApplication?.handle ? editingHandle : undefined,
         adminNotes: adminNotes || undefined
       })
       toast.success('Application approved successfully!')
       setShowModal(false)
       setSelectedApplication(null)
       setAdminNotes('')
+      setEditingHandle('')
+      setHandleAvailable(null)
       fetchApplications()
     } catch (error: any) {
       console.error('Error approving application:', error)
@@ -118,6 +141,8 @@ export default function ApplicationsPage() {
       setSelectedApplication(null)
       setRejectionReason('')
       setAdminNotes('')
+      setEditingHandle('')
+      setHandleAvailable(null)
       fetchApplications()
     } catch (error: any) {
       console.error('Error rejecting application:', error)
@@ -127,10 +152,56 @@ export default function ApplicationsPage() {
     }
   }
 
+  const checkHandleAvailability = async (handle: string) => {
+    if (!handle || handle.length < 3) {
+      setHandleAvailable(null)
+      return
+    }
+
+    const normalizedHandle = handle.toLowerCase().trim().replace(/[^a-z0-9-]/g, '')
+    if (normalizedHandle !== handle.toLowerCase().trim()) {
+      setHandleAvailable(false)
+      return
+    }
+
+    setCheckingHandle(true)
+    try {
+      const excludeId = selectedApplication?._id
+      const response = await api.get(`/applications/check-handle/${normalizedHandle}`, {
+        params: excludeId ? { excludeApplicationId: excludeId } : {}
+      })
+      setHandleAvailable(response.data.available)
+    } catch (error) {
+      console.error('Error checking handle:', error)
+      setHandleAvailable(null)
+    } finally {
+      setCheckingHandle(false)
+    }
+  }
+
+  const handleHandleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')
+    setEditingHandle(value)
+    
+    // Clear previous timeout
+    if (handleCheckTimeout) {
+      clearTimeout(handleCheckTimeout)
+    }
+    
+    // Debounce handle check
+    const timeoutId = setTimeout(() => {
+      checkHandleAvailability(value)
+    }, 500)
+    
+    setHandleCheckTimeout(timeoutId)
+  }
+
   const openModal = (application: CreatorApplication) => {
     setSelectedApplication(application)
     setAdminNotes(application.adminNotes || '')
     setRejectionReason(application.rejectionReason || '')
+    setEditingHandle(application.handle)
+    setHandleAvailable(null)
     setShowModal(true)
   }
 
@@ -264,6 +335,8 @@ export default function ApplicationsPage() {
                     setSelectedApplication(null)
                     setAdminNotes('')
                     setRejectionReason('')
+                    setEditingHandle('')
+                    setHandleAvailable(null)
                   }}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
@@ -282,9 +355,40 @@ export default function ApplicationsPage() {
                       <span className="text-gray-400">Display Name:</span>
                       <span className="text-white font-medium">{selectedApplication.displayName}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-400">Handle:</span>
-                      <span className="text-primary-400 font-medium">@{selectedApplication.handle}</span>
+                    {/* Handle/URL Slug - Editable */}
+                    <div>
+                      <label className="block text-gray-400 mb-2">URL Slug (Handle):</label>
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm">
+                          lineup.com/creator/
+                        </span>
+                        <input
+                          type="text"
+                          value={editingHandle}
+                          onChange={handleHandleChange}
+                          className="w-full pl-40 pr-4 py-2 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                          placeholder="creator-handle"
+                        />
+                      </div>
+                      {editingHandle && (
+                        <div className="mt-2">
+                          {checkingHandle ? (
+                            <p className="text-xs text-gray-400">Checking availability...</p>
+                          ) : handleAvailable === true ? (
+                            <p className="text-xs text-green-400">✓ This handle is available</p>
+                          ) : handleAvailable === false ? (
+                            <p className="text-xs text-red-400">✗ This handle is already taken</p>
+                          ) : null}
+                        </div>
+                      )}
+                      {editingHandle !== selectedApplication.handle && (
+                        <p className="text-xs text-yellow-400 mt-1">
+                          ⚠️ Handle will be changed from @{selectedApplication.handle} to @{editingHandle}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        Final URL: lineup.com/creator/{editingHandle || selectedApplication.handle}
+                      </p>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-400">Email:</span>

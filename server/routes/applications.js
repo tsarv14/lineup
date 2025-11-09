@@ -93,18 +93,23 @@ router.post('/', [
 router.get('/check-handle/:handle', async (req, res) => {
   try {
     const normalizedHandle = req.params.handle.toLowerCase().trim();
+    const excludeApplicationId = req.query.excludeApplicationId;
 
     // Check Storefront
     const existingStorefront = await Storefront.findOne({ handle: normalizedHandle });
     if (existingStorefront) {
-      return res.json({ available: false, message: 'This handle is already taken' });
+      return res.json({ available: false, message: 'This handle is already taken by another creator' });
     }
 
-    // Check applications
-    const existingApplication = await CreatorApplication.findOne({
+    // Check applications (excluding current application if provided)
+    const query = {
       handle: normalizedHandle,
       status: { $in: ['pending', 'approved'] }
-    });
+    };
+    if (excludeApplicationId) {
+      query._id = { $ne: excludeApplicationId };
+    }
+    const existingApplication = await CreatorApplication.findOne(query);
     if (existingApplication) {
       return res.json({ available: false, message: 'This handle is already taken or pending approval' });
     }
@@ -159,8 +164,15 @@ router.get('/:id', auth, adminAuth, async (req, res) => {
 // @route   PUT /api/applications/:id/approve
 // @desc    Approve an application (admin only)
 // @access  Private (admin)
-router.put('/:id/approve', auth, adminAuth, async (req, res) => {
+router.put('/:id/approve', auth, adminAuth, [
+  body('handle').optional().trim().isLength({ min: 3, max: 30 }).matches(/^[a-z0-9-]+$/).withMessage('Handle must be 3-30 characters and contain only lowercase letters, numbers, and hyphens')
+], async (req, res) => {
   try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+
     const application = await CreatorApplication.findById(req.params.id);
     if (!application) {
       return res.status(404).json({ message: 'Application not found' });
@@ -170,10 +182,33 @@ router.put('/:id/approve', auth, adminAuth, async (req, res) => {
       return res.status(400).json({ message: 'Application is not pending' });
     }
 
-    // Double-check handle is still available
-    const existingStorefront = await Storefront.findOne({ handle: application.handle });
+    // Use provided handle or application handle
+    let finalHandle = req.body.handle ? req.body.handle.toLowerCase().trim() : application.handle;
+    
+    // Validate handle format
+    if (!/^[a-z0-9-]+$/.test(finalHandle)) {
+      return res.status(400).json({ message: 'Handle can only contain lowercase letters, numbers, and hyphens' });
+    }
+
+    // Check if handle is available (excluding this application)
+    const existingStorefront = await Storefront.findOne({ handle: finalHandle });
     if (existingStorefront) {
-      return res.status(400).json({ message: 'Handle is no longer available' });
+      return res.status(400).json({ message: 'This handle is already taken by another creator' });
+    }
+
+    // Check if handle is in another pending/approved application
+    const existingApplication = await CreatorApplication.findOne({
+      handle: finalHandle,
+      status: { $in: ['pending', 'approved'] },
+      _id: { $ne: application._id }
+    });
+    if (existingApplication) {
+      return res.status(400).json({ message: 'This handle is already taken or pending in another application' });
+    }
+
+    // Update application with new handle if changed
+    if (finalHandle !== application.handle) {
+      application.handle = finalHandle;
     }
 
     // Update application status
@@ -194,10 +229,10 @@ router.put('/:id/approve', auth, adminAuth, async (req, res) => {
           await user.save();
         }
 
-        // Create storefront
+        // Create storefront with the final handle
         const storefront = new Storefront({
           owner: user._id,
-          handle: application.handle,
+          handle: finalHandle,
           displayName: application.displayName,
           description: '',
           socialLinks: application.socialLinks || {},
