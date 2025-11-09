@@ -58,23 +58,7 @@ export default function StorePage() {
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 's' && editingSection) {
         e.preventDefault()
-        // Quick save
-        const quickSave = async () => {
-          try {
-            if (!formData.handle || !formData.displayName) {
-              toast.error('Handle and display name are required')
-              return
-            }
-            await api.put('/creator/storefront', formData)
-            setStorefront(formData)
-            setEditingSection(null)
-            toast.success('Changes saved!', { duration: 2000 })
-            await fetchStorefront()
-          } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Failed to save changes')
-          }
-        }
-        quickSave()
+        handleSave(editingSection)
       }
     }
     window.addEventListener('keydown', handleKeyDown)
@@ -105,7 +89,6 @@ export default function StorePage() {
     } catch (error: any) {
       // 404 is expected for new users who haven't created a storefront yet
       if (error.response?.status === 404) {
-        // Silently handle - user just needs to create their storefront
         console.log('No storefront found - user can create one')
       } else {
         console.error('Error fetching storefront:', error)
@@ -125,7 +108,7 @@ export default function StorePage() {
     }
   }
 
-  const handleSave = async () => {
+  const handleSave = async (section?: string) => {
     try {
       if (!formData.handle || !formData.displayName) {
         toast.error('Handle and display name are required')
@@ -134,8 +117,10 @@ export default function StorePage() {
       
       const response = await api.put('/creator/storefront', formData)
       setStorefront(response.data)
-      setEditingSection(null)
-      toast.success('Storefront updated successfully!')
+      if (section) {
+        setEditingSection(null)
+      }
+      toast.success(section ? `${section.charAt(0).toUpperCase() + section.slice(1)} updated successfully!` : 'Storefront updated successfully!')
       await fetchStorefront()
     } catch (error: any) {
       console.error('Save error:', error)
@@ -170,6 +155,8 @@ export default function StorePage() {
       const imageUrl = response.data.url
       setFormData(prev => ({ ...prev, [field]: imageUrl }))
       toast.success('Image uploaded successfully!')
+      // Auto-save after upload
+      await handleSave()
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Failed to upload image')
     } finally {
@@ -191,7 +178,7 @@ export default function StorePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
+      <div className="flex items-center justify-center py-20 bg-black min-h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
       </div>
     )
@@ -201,12 +188,12 @@ export default function StorePage() {
     <div className="min-h-screen bg-black">
       {/* Edit Mode Banner */}
       {editingSection && (
-        <div className="bg-primary-600/20 border-b border-primary-500/30 px-4 py-2 text-center backdrop-blur-sm">
+        <div className="bg-primary-600/20 border-b border-primary-500/30 px-4 py-2 text-center backdrop-blur-sm sticky top-0 z-50">
           <p className="text-sm text-primary-300">
             <span className="font-semibold">Editing:</span> {editingSection.charAt(0).toUpperCase() + editingSection.slice(1)} • 
-          <button onClick={handleSave} className="ml-2 underline">Save</button> • 
-          <button onClick={() => setEditingSection(null)} className="ml-2 underline">Cancel</button>
-          <span className="ml-4 text-xs">Press Ctrl+S to quick save</span>
+            <button onClick={() => handleSave(editingSection)} className="ml-2 underline hover:text-primary-200">Save</button> • 
+            <button onClick={() => setEditingSection(null)} className="ml-2 underline hover:text-primary-200">Cancel</button>
+            <span className="ml-4 text-xs">Press Ctrl+S to quick save or Esc to cancel</span>
           </p>
         </div>
       )}
@@ -216,9 +203,21 @@ export default function StorePage() {
         <div className="pt-8 pb-6">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
-              <div className="relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
+              <div className="relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0 group">
+                {formData.logoImage ? (
+                  <Image
+                    src={formData.logoImage}
+                    alt="Storefront Logo"
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-primary-500 flex items-center justify-center text-white text-2xl font-bold">
+                    {formData.displayName?.charAt(0) || user?.username?.charAt(0) || 'S'}
+                  </div>
+                )}
                 {editingSection === 'logo' ? (
-                  <div className="w-full h-full bg-slate-800 border-2 border-primary-500 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10">
                     <input
                       type="file"
                       accept="image/*"
@@ -226,43 +225,56 @@ export default function StorePage() {
                       className="hidden"
                       id="logo-upload"
                     />
-                    <label htmlFor="logo-upload" className="cursor-pointer text-xs text-center p-2">
-                      {uploading === 'logoImage' ? 'Uploading...' : 'Click to upload'}
+                    <label htmlFor="logo-upload" className="cursor-pointer text-white text-xs text-center px-3 py-2 bg-primary-600 rounded hover:bg-primary-700">
+                      {uploading === 'logoImage' ? 'Uploading...' : 'Upload Logo'}
                     </label>
                   </div>
-                ) : formData.logoImage ? (
-                  <Image
-                    src={formData.logoImage}
-                    alt="Storefront Logo"
-                    fill
-                    className="object-cover cursor-pointer"
-                    onClick={() => setEditingSection('logo')}
-                  />
                 ) : (
-                  <div 
-                    className="w-full h-full bg-primary-500 flex items-center justify-center text-white text-2xl font-bold cursor-pointer hover:bg-primary-600"
+                  <button
                     onClick={() => setEditingSection('logo')}
+                    className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center z-10"
                   >
-                    {formData.displayName?.charAt(0) || user?.username?.charAt(0) || 'S'}
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              <div className="flex-1">
+                {editingSection === 'info' ? (
+                  <div className="flex flex-col gap-2">
+                    <input
+                      type="text"
+                      value={formData.handle}
+                      onChange={(e) => setFormData(prev => ({ ...prev, handle: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
+                      placeholder="Handle (URL slug)"
+                      className="text-white text-sm bg-slate-800 border border-primary-500 rounded px-3 py-2"
+                    />
+                    <input
+                      type="text"
+                      value={formData.displayName}
+                      onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
+                      placeholder="Display Name"
+                      className="text-white text-xl font-semibold bg-slate-800 border border-primary-500 rounded px-3 py-2"
+                    />
+                  </div>
+                ) : (
+                  <div className="group relative">
+                    <p className="text-white text-xl font-semibold">{formData.displayName || 'Your Store Name'}</p>
+                    {formData.handle && (
+                      <p className="text-gray-400 text-sm">@{formData.handle}</p>
+                    )}
+                    <button
+                      onClick={() => setEditingSection('info')}
+                      className="absolute -right-8 top-0 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-slate-800 rounded hover:bg-slate-700"
+                    >
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
                   </div>
                 )}
               </div>
-              {editingSection === 'info' ? (
-                <input
-                  type="text"
-                  value={formData.displayName}
-                  onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
-                  placeholder="Display Name"
-                  className="text-white text-xl font-semibold bg-slate-800 border border-primary-500 rounded px-2 py-1"
-                />
-              ) : (
-                <p 
-                  className="text-white text-xl font-semibold cursor-pointer hover:text-primary-400"
-                  onClick={() => setEditingSection('info')}
-                >
-                  {formData.displayName || 'Your Store Name'}
-                </p>
-              )}
               <div className="flex items-center gap-2">
                 <Link
                   href={formData.handle ? `/creator/${formData.handle}/picks` : '#'}
@@ -302,8 +314,19 @@ export default function StorePage() {
 
         {/* Banner Section */}
         <div className="relative w-full h-64 md:h-96 mb-8 rounded-lg overflow-hidden group">
+          {formData.bannerImage ? (
+            <Image
+              src={formData.bannerImage}
+              alt="Storefront Banner"
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-r from-primary-600 to-primary-800"></div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
           {editingSection === 'banner' ? (
-            <div className="w-full h-full bg-slate-800 border-2 border-primary-500 flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10">
               <input
                 type="file"
                 accept="image/*"
@@ -311,39 +334,26 @@ export default function StorePage() {
                 className="hidden"
                 id="banner-upload"
               />
-              <label htmlFor="banner-upload" className="cursor-pointer text-white text-center p-4">
-                {uploading === 'bannerImage' ? 'Uploading...' : 'Click to upload banner image'}
+              <label htmlFor="banner-upload" className="cursor-pointer text-white px-4 py-2 bg-primary-600 rounded hover:bg-primary-700">
+                {uploading === 'bannerImage' ? 'Uploading...' : 'Upload Banner Image'}
               </label>
             </div>
-          ) : formData.bannerImage ? (
-            <>
-              <Image
-                src={formData.bannerImage}
-                alt="Storefront Banner"
-                fill
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-              <button
-                onClick={() => setEditingSection('banner')}
-                className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity px-3 py-2 bg-black/50 text-white rounded-lg hover:bg-black/70"
-              >
-                Edit Banner
-              </button>
-            </>
           ) : (
-            <div 
-              className="w-full h-full bg-gradient-to-r from-primary-600 to-primary-800 cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center"
+            <button
               onClick={() => setEditingSection('banner')}
+              className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity px-3 py-2 bg-black/60 backdrop-blur-sm text-white rounded-lg hover:bg-black/80 flex items-center gap-2 text-sm"
             >
-              <p className="text-white/50 text-lg">Click to add banner image</p>
-            </div>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit Banner
+            </button>
           )}
         </div>
 
         {/* Storefront Info Section */}
         <div className="mb-12">
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-4 mb-6 group relative">
             <div className="flex items-center gap-4">
               <div className="relative w-16 h-16 rounded-full overflow-hidden">
                 {formData.logoImage ? (
@@ -359,72 +369,76 @@ export default function StorePage() {
                   </div>
                 )}
               </div>
-              {editingSection === 'info' ? (
-                <div className="flex flex-col gap-2">
-                  <input
-                    type="text"
-                    value={formData.handle}
-                    onChange={(e) => setFormData(prev => ({ ...prev, handle: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
-                    placeholder="Handle (URL slug)"
-                    className="text-white text-sm bg-slate-800 border border-primary-500 rounded px-2 py-1"
-                  />
-                  <input
-                    type="text"
-                    value={formData.displayName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
-                    placeholder="Display Name"
-                    className="text-white text-2xl font-bold bg-slate-800 border border-primary-500 rounded px-2 py-1"
-                  />
-                </div>
-              ) : (
-                <div 
-                  className="cursor-pointer hover:text-primary-400"
-                  onClick={() => setEditingSection('info')}
-                >
-                  <p className="text-white text-2xl font-bold">
-                    {formData.displayName || 'Your Store Name'}
-                  </p>
-                  {formData.handle && (
-                    <p className="text-gray-400 text-sm">@{formData.handle}</p>
-                  )}
-                </div>
-              )}
+              <div>
+                <p className="text-white text-2xl font-bold">{formData.displayName || 'Your Store Name'}</p>
+                {formData.handle && (
+                  <p className="text-gray-400 text-sm">@{formData.handle}</p>
+                )}
+              </div>
             </div>
+            {editingSection !== 'info' && (
+              <button
+                onClick={() => setEditingSection('info')}
+                className="absolute -right-8 top-0 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-slate-800 rounded hover:bg-slate-700"
+              >
+                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+            )}
           </div>
           
           <div className="space-y-4 mb-6">
-            {editingSection === 'description' ? (
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Description"
-                className="w-full text-white text-lg font-semibold bg-slate-800 border border-primary-500 rounded px-2 py-1"
-                rows={2}
-              />
-            ) : (
-              <p 
-                className="text-white text-lg font-semibold cursor-pointer hover:text-primary-400"
-                onClick={() => setEditingSection('description')}
-              >
-                {formData.description || 'The best picks from the best experts'}
-              </p>
-            )}
-            {editingSection === 'about' ? (
-              <textarea
-                value={formData.aboutText}
-                onChange={(e) => setFormData(prev => ({ ...prev, aboutText: e.target.value }))}
-                placeholder="About text"
-                className="w-full text-gray-400 text-base bg-slate-800 border border-primary-500 rounded px-2 py-1"
-                rows={4}
-              />
-            ) : (
-              <p 
-                className="text-gray-400 text-base cursor-pointer hover:text-gray-300"
-                onClick={() => setEditingSection('about')}
-              >
-                {formData.aboutText || 'Where sports bettors become winners. Let\'s win more together. Subscribe today!'}
-              </p>
-            )}
+            <div className="group relative">
+              {editingSection === 'description' ? (
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Description"
+                  className="w-full text-white text-lg font-semibold bg-slate-800 border border-primary-500 rounded px-3 py-2"
+                  rows={2}
+                />
+              ) : (
+                <>
+                  <p className="text-white text-lg font-semibold">
+                    {formData.description || 'The best picks from the best experts'}
+                  </p>
+                  <button
+                    onClick={() => setEditingSection('description')}
+                    className="absolute -right-8 top-0 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-slate-800 rounded hover:bg-slate-700"
+                  >
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                </>
+              )}
+            </div>
+            <div className="group relative">
+              {editingSection === 'about' ? (
+                <textarea
+                  value={formData.aboutText}
+                  onChange={(e) => setFormData(prev => ({ ...prev, aboutText: e.target.value }))}
+                  placeholder="About text"
+                  className="w-full text-gray-400 text-base bg-slate-800 border border-primary-500 rounded px-3 py-2"
+                  rows={4}
+                />
+              ) : (
+                <>
+                  <p className="text-gray-400 text-base">
+                    {formData.aboutText || 'Where sports bettors become winners. Let\'s win more together. Subscribe today!'}
+                  </p>
+                  <button
+                    onClick={() => setEditingSection('about')}
+                    className="absolute -right-8 top-0 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-slate-800 rounded hover:bg-slate-700"
+                  >
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                </>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-4 flex-wrap">
@@ -458,24 +472,49 @@ export default function StorePage() {
               >
                 <p className="text-sm font-medium">Login</p>
               </Link>
-              {editingSection === 'social' ? (
-                <input
-                  type="text"
-                  value={formData.socialLinks.twitter}
-                  onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, twitter: e.target.value } }))}
-                  placeholder="Twitter URL"
-                  className="px-2 py-1 bg-slate-800 border border-primary-500 rounded text-white text-sm"
-                />
-              ) : (
-                <button
-                  onClick={() => setEditingSection('social')}
-                  className="p-2 border border-white/20 rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="w-5 h-5 text-white">
-                    <path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"></path>
-                  </svg>
-                </button>
-              )}
+              <div className="group relative">
+                {editingSection === 'social' ? (
+                  <input
+                    type="text"
+                    value={formData.socialLinks.twitter}
+                    onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, twitter: e.target.value } }))}
+                    placeholder="Twitter URL"
+                    className="px-3 py-2 bg-slate-800 border border-primary-500 rounded text-white text-sm"
+                  />
+                ) : (
+                  <>
+                    {formData.socialLinks?.twitter ? (
+                      <a
+                        href={formData.socialLinks.twitter}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 border border-white/20 rounded-lg hover:bg-white/10 transition-colors"
+                      >
+                        <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="w-5 h-5 text-white">
+                          <path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"></path>
+                        </svg>
+                      </a>
+                    ) : (
+                      <button
+                        onClick={() => setEditingSection('social')}
+                        className="p-2 border border-white/20 rounded-lg hover:bg-white/10 transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="w-5 h-5 text-white">
+                          <path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"></path>
+                        </svg>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setEditingSection('social')}
+                      className="absolute -right-8 top-0 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-slate-800 rounded hover:bg-slate-700"
+                    >
+                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      </svg>
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -511,6 +550,16 @@ export default function StorePage() {
                 </div>
               ))}
             </div>
+            {plans.length > 3 && (
+              <div className="text-center">
+                <Link
+                  href={formData.handle ? `/creator/${formData.handle}/plans` : '#'}
+                  className="inline-block px-6 py-3 bg-transparent border border-white/20 text-white rounded-lg hover:bg-white/10 transition-colors"
+                >
+                  <p className="text-sm font-medium">View All Plans</p>
+                </Link>
+              </div>
+            )}
           </div>
         )}
 
@@ -575,23 +624,30 @@ export default function StorePage() {
         {/* About Us Section */}
         <div className="mb-16">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-            <div>
+            <div className="group relative">
               <p className="text-white text-3xl font-bold mb-6">About Us</p>
               {editingSection === 'about' ? (
                 <textarea
                   value={formData.aboutText}
                   onChange={(e) => setFormData(prev => ({ ...prev, aboutText: e.target.value }))}
                   placeholder="About text"
-                  className="w-full text-gray-400 text-base bg-slate-800 border border-primary-500 rounded px-2 py-1"
+                  className="w-full text-gray-400 text-base bg-slate-800 border border-primary-500 rounded px-3 py-2"
                   rows={8}
                 />
               ) : (
-                <p 
-                  className="text-gray-400 text-base leading-relaxed cursor-pointer hover:text-gray-300"
-                  onClick={() => setEditingSection('about')}
-                >
-                  {formData.aboutText || `${formData.displayName || 'Your store'} uses advanced sports analytics to deliver data-driven picks that win. Our experts analyze player stats, trends, and market shifts to uncover true value plays. We don't guess - we calculate. Get smarter, more confident picks and turn data into profit. ${formData.displayName || 'Your store'}: Where every play brings you closer to victory.`}
-                </p>
+                <>
+                  <p className="text-gray-400 text-base leading-relaxed">
+                    {formData.aboutText || `${formData.displayName || 'Your store'} uses advanced sports analytics to deliver data-driven picks that win. Our experts analyze player stats, trends, and market shifts to uncover true value plays. We don't guess - we calculate. Get smarter, more confident picks and turn data into profit. ${formData.displayName || 'Your store'}: Where every play brings you closer to victory.`}
+                  </p>
+                  <button
+                    onClick={() => setEditingSection('about')}
+                    className="absolute -right-8 top-0 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-slate-800 rounded hover:bg-slate-700"
+                  >
+                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                </>
               )}
             </div>
             <div className="relative w-full h-96 rounded-lg overflow-hidden group">
@@ -604,8 +660,8 @@ export default function StorePage() {
                     className="hidden"
                     id="about-image-upload"
                   />
-                  <label htmlFor="about-image-upload" className="cursor-pointer text-white text-center p-4">
-                    {uploading === 'aboutImage' ? 'Uploading...' : 'Click to upload about image'}
+                  <label htmlFor="about-image-upload" className="cursor-pointer text-white px-4 py-2 bg-primary-600 rounded hover:bg-primary-700">
+                    {uploading === 'aboutImage' ? 'Uploading...' : 'Upload About Image'}
                   </label>
                 </div>
               ) : formData.aboutImage ? (
@@ -618,19 +674,25 @@ export default function StorePage() {
                   />
                   <button
                     onClick={() => setEditingSection('aboutImage')}
-                    className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity px-3 py-2 bg-black/50 text-white rounded-lg hover:bg-black/70"
+                    className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity px-3 py-2 bg-black/60 backdrop-blur-sm text-white rounded-lg hover:bg-black/80 flex items-center gap-2 text-sm"
                   >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
                     Edit Image
                   </button>
                 </>
               ) : (
-                <div 
-                  className="w-full h-full bg-slate-800 flex items-center justify-center cursor-pointer hover:bg-slate-700 transition-colors"
-                  onClick={() => setEditingSection('aboutImage')}
-                >
+                <div className="w-full h-full bg-slate-800 flex items-center justify-center">
                   <div className="text-6xl font-bold text-primary-400/20">
                     {formData.displayName?.charAt(0) || user?.username?.charAt(0) || 'S'}
                   </div>
+                  <button
+                    onClick={() => setEditingSection('aboutImage')}
+                    className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                  >
+                    <span className="text-white text-sm px-3 py-2 bg-primary-600 rounded hover:bg-primary-700">Add Image</span>
+                  </button>
                 </div>
               )}
             </div>
@@ -660,18 +722,6 @@ export default function StorePage() {
             </div>
           </div>
         </div>
-
-        {/* Save Button */}
-        {editingSection && (
-          <div className="fixed bottom-8 right-8 z-50">
-            <button
-              onClick={handleSave}
-              className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold shadow-lg"
-            >
-              Save Changes
-            </button>
-          </div>
-        )}
       </main>
     </div>
   )
