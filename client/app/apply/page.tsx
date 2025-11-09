@@ -156,7 +156,6 @@ export default function ApplyPage() {
                 required
                 minLength={3}
                 maxLength={30}
-                pattern="[a-z0-9-]+"
                 className="w-full pl-40 pr-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
                 placeholder="your-creator-name"
               />

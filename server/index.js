@@ -35,8 +35,8 @@ app.use(cors({
     if (origin.match(/^http:\/\/localhost(:\d+)?$/)) {
       return callback(null, true);
     }
-    // Allow all Vercel domains
-    if (origin.match(/\.vercel\.app$/) || origin.match(/\.railway\.app$/)) {
+    // Allow all Vercel domains (including preview deployments)
+    if (origin.match(/\.vercel\.app$/) || origin.match(/\.railway\.app$/) || origin.match(/\.onrender\.com$/)) {
       return callback(null, true);
     }
     // In production, check against allowed origins
