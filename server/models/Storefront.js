@@ -12,7 +12,9 @@ const storefrontSchema = new mongoose.Schema({
   socialLinks: {
     twitter: String,
     instagram: String,
-    website: String
+    website: String,
+    tiktok: String,
+    youtube: String
   },
   sports: [{ type: String }], // Array of selected sports to display
   createdAt: { type: Date, default: Date.now },

@@ -44,7 +44,7 @@ export default function Home() {
               Browse Creators
             </button>
             <button
-              onClick={() => router.push('/creator/dashboard')}
+              onClick={() => router.push('/apply')}
               className="px-8 py-4 bg-black/50 backdrop-blur-sm text-white border-2 border-slate-700 rounded-xl hover:border-primary-500/50 hover:bg-black/70 transition-all text-lg font-semibold"
             >
               Apply Now
