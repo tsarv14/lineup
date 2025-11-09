@@ -426,7 +426,7 @@ export default function StorePage() {
             ) : (
               <div className="text-center">
                 <p className="text-white text-lg font-semibold mb-4">
-                  {formData.description || ''}
+                  {formData.description || 'Add a description for your store to tell visitors what makes you unique and why they should subscribe to your picks.'}
                 </p>
                 <div className="flex justify-center">
                   <button
@@ -480,7 +480,7 @@ export default function StorePage() {
             ) : (
               <div className="text-center">
                 <p className="text-gray-300 text-base leading-relaxed mb-4 whitespace-pre-wrap">
-                  {formData.aboutText || ''}
+                  {formData.aboutText || 'Tell your story here. Share your background, expertise, and what sets your picks apart. This is your chance to connect with potential subscribers and build trust.'}
                 </p>
                 <div className="flex justify-center">
                   <button
@@ -873,9 +873,10 @@ export default function StorePage() {
                   </div>
                 </>
               ) : (
-                <div className="w-full h-full bg-slate-800 flex items-center justify-center relative">
-                  <div className="text-6xl font-bold text-primary-400/20">
-                    {formData.displayName?.charAt(0) || user?.username?.charAt(0) || 'S'}
+                <div className="w-full h-full bg-slate-800 flex flex-col items-center justify-center relative">
+                  <div className="text-center px-6">
+                    <p className="text-gray-400 text-sm mb-2">Add extra photos and wins here</p>
+                    <p className="text-gray-500 text-xs">Showcase your success stories and build credibility with potential subscribers</p>
                   </div>
                   <div className="absolute top-4 right-4 z-10">
                     <button
