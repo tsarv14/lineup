@@ -13,7 +13,7 @@ export default function ExampleCreatorPage() {
     logoImage: 'https://winible-posts-v2.s3.us-west-1.amazonaws.com/1446854036518097495-de86fd68-3f65-4746-bc66-ab2e4ea0d143.jpeg',
     bannerImage: 'https://winible-posts-v2.s3.us-west-1.amazonaws.com/1446854036518097495-5c8acd22-2b76-495f-b9dd-89ed0e4683e3.jpeg',
     description: 'The best picks from the best experts',
-    aboutText: 'VVCREW uses advanced sports analytics to deliver data-driven picks that win. Our experts analyze player stats, trends, and market shifts to uncover true value plays. We don't guess — we calculate. Get smarter, more confident picks and turn data into profit. VVCREW: Where every play brings you closer to victory.',
+    aboutText: 'VVCREW uses advanced sports analytics to deliver data-driven picks that win. Our experts analyze player stats, trends, and market shifts to uncover true value plays. We don\'t guess - we calculate. Get smarter, more confident picks and turn data into profit. VVCREW: Where every play brings you closer to victory.',
     aboutImage: 'https://winible-posts-v2.s3.us-west-1.amazonaws.com/1446854036518097495-e53b0ae9-b892-4da8-904f-1bc35f88ca0c.jpeg',
     sports: ['Football', 'College Football', 'Baseball', 'Basketball', 'Golf', 'Soccer'],
     socialLinks: {
