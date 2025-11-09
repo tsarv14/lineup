@@ -391,7 +391,7 @@ export default function StorePage() {
           </div>
         </div>
         {/* Description Section */}
-        <div className="mb-6 bg-slate-900/50 rounded-lg p-4 border border-slate-800">
+        <div className="mb-6 mt-4 bg-slate-900/50 rounded-lg p-4 border border-slate-800">
           <div className="relative">
             {editingSection === 'description' ? (
               <div className="space-y-4">
@@ -498,222 +498,228 @@ export default function StorePage() {
           </div>
         </div>
 
-        {/* Social Links Section - Completely Redesigned */}
-        <div className="mb-6 bg-slate-900/50 rounded-lg p-4 border border-slate-800">
-          <div className="text-center mb-4">
-            <h3 className="text-white text-lg font-semibold mb-1">Connect With Us</h3>
-            <p className="text-gray-400 text-xs">Add your social media links to stay connected</p>
-          </div>
-          
-          {editingSection === 'social' ? (
-            <div className="space-y-4 max-w-md mx-auto">
+        {/* Subscription Plans and Social Links - Side by Side */}
+        <div className="mb-12 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Subscription Plans Section - Left Side */}
+          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-800">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <label className="block text-gray-300 text-sm font-medium mb-2">Twitter/X URL</label>
-                <input
-                  type="url"
-                  value={formData.socialLinks.twitter}
-                  onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, twitter: e.target.value } }))}
-                  placeholder="https://twitter.com/yourhandle"
-                  className="w-full text-white text-sm bg-slate-800 border border-primary-500 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
+                <h3 className="text-white text-lg font-semibold mb-1">Subscription Plans</h3>
+                <p className="text-gray-400 text-xs">Manage your subscription plans and pricing</p>
               </div>
-              <div>
-                <label className="block text-gray-300 text-sm font-medium mb-2">Instagram URL</label>
-                <input
-                  type="url"
-                  value={formData.socialLinks.instagram}
-                  onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, instagram: e.target.value } }))}
-                  placeholder="https://instagram.com/yourhandle"
-                  className="w-full text-white text-sm bg-slate-800 border border-primary-500 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-300 text-sm font-medium mb-2">Website URL</label>
-                <input
-                  type="url"
-                  value={formData.socialLinks.website}
-                  onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, website: e.target.value } }))}
-                  placeholder="https://yourwebsite.com"
-                  className="w-full text-white text-sm bg-slate-800 border border-primary-500 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-300 text-sm font-medium mb-2">TikTok URL</label>
-                <input
-                  type="url"
-                  value={formData.socialLinks.tiktok}
-                  onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, tiktok: e.target.value } }))}
-                  placeholder="https://tiktok.com/@yourhandle"
-                  className="w-full text-white text-sm bg-slate-800 border border-primary-500 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-              <div>
-                <label className="block text-gray-300 text-sm font-medium mb-2">YouTube URL</label>
-                <input
-                  type="url"
-                  value={formData.socialLinks.youtube}
-                  onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, youtube: e.target.value } }))}
-                  placeholder="https://youtube.com/@yourhandle"
-                  className="w-full text-white text-sm bg-slate-800 border border-primary-500 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                />
-              </div>
-              <div className="flex gap-2 justify-center pt-4">
-                <button
-                  onClick={() => {
-                    handleSave('social')
-                    setEditingSection(null)
-                  }}
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium flex items-center gap-2 border border-primary-500"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  Save
-                </button>
-                <button
-                  onClick={() => setEditingSection(null)}
-                  className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors text-sm font-medium border border-slate-600"
-                >
-                  Cancel
-                </button>
-              </div>
+              <button
+                onClick={() => router.push('/creator/dashboard/plans')}
+                className="px-3 py-1.5 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1.5 border border-slate-700"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit Plans
+              </button>
             </div>
-          ) : (
-            <div className="flex items-center justify-center gap-6 flex-wrap">
-              {formData.socialLinks?.twitter ? (
-                <a
-                  href={formData.socialLinks.twitter}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors group"
-                >
-                  <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="w-6 h-6 text-white group-hover:text-primary-400">
-                    <path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"></path>
-                  </svg>
-                  <span className="text-white font-medium group-hover:text-primary-400">Twitter</span>
-                </a>
-              ) : null}
-              {formData.socialLinks?.instagram ? (
-                <a
-                  href={formData.socialLinks.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors group"
-                >
-                  <svg className="w-6 h-6 text-white group-hover:text-primary-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                  </svg>
-                  <span className="text-white font-medium group-hover:text-primary-400">Instagram</span>
-                </a>
-              ) : null}
-              {formData.socialLinks?.website ? (
-                <a
-                  href={formData.socialLinks.website}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors group"
-                >
-                  <svg className="w-6 h-6 text-white group-hover:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-                  </svg>
-                  <span className="text-white font-medium group-hover:text-primary-400">Website</span>
-                </a>
-              ) : null}
-              {formData.socialLinks?.tiktok ? (
-                <a
-                  href={formData.socialLinks.tiktok}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors group"
-                >
-                  <svg className="w-6 h-6 text-white group-hover:text-primary-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
-                  </svg>
-                  <span className="text-white font-medium group-hover:text-primary-400">TikTok</span>
-                </a>
-              ) : null}
-              {formData.socialLinks?.youtube ? (
-                <a
-                  href={formData.socialLinks.youtube}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-3 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors group"
-                >
-                  <svg className="w-6 h-6 text-white group-hover:text-primary-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                  </svg>
-                  <span className="text-white font-medium group-hover:text-primary-400">YouTube</span>
-                </a>
-              ) : null}
-              {(!formData.socialLinks?.twitter && !formData.socialLinks?.instagram && !formData.socialLinks?.website && !formData.socialLinks?.tiktok && !formData.socialLinks?.youtube) && (
-                <p className="text-gray-400 text-sm">No social links added yet</p>
-              )}
-              <div className="w-full flex justify-center mt-4">
-                <button
-                  onClick={() => setEditingSection('social')}
-                  className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium flex items-center gap-2 border border-slate-700"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  {(!formData.socialLinks?.twitter && !formData.socialLinks?.instagram && !formData.socialLinks?.website && !formData.socialLinks?.tiktok && !formData.socialLinks?.youtube) ? 'Add Social Links' : 'Edit Social Links'}
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Subscription Plans Section */}
-        <div className="mb-12 bg-slate-900/50 rounded-lg p-4 border border-slate-800">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-white text-lg font-semibold mb-1">Subscription Plans</h3>
-              <p className="text-gray-400 text-xs">Manage your subscription plans and pricing</p>
-            </div>
-            <button
-              onClick={() => router.push('/creator/dashboard/plans')}
-              className="px-3 py-1.5 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1.5 border border-slate-700"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-              </svg>
-              Edit Plans
-            </button>
-          </div>
-          {plans.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {plans.slice(0, 3).map((plan) => (
-                <div key={plan._id} className="bg-slate-800 border border-slate-700 rounded-lg p-4">
-                  <div className="mb-3">
-                    <p className="text-white text-lg font-semibold mb-1">{plan.name}</p>
-                    {plan.freeTrialDays > 0 && (
-                      <p className="text-primary-400 text-xs">{plan.freeTrialDays} day Free Trial</p>
-                    )}
-                  </div>
-                  <div className="mb-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="text-white text-2xl font-bold">
-                        {plan.billingVariants.length > 0 ? formatPrice(plan.billingVariants[0].priceCents) : 'N/A'}
-                      </p>
-                      {plan.billingVariants.length > 0 && (
-                        <span className="text-gray-400 text-xs">
-                          per {plan.billingVariants[0].interval === 'day' ? '14 days' : getIntervalText(plan.billingVariants[0].interval)}
-                        </span>
+            {plans.length > 0 ? (
+              <div className="space-y-3">
+                {plans.slice(0, 2).map((plan) => (
+                  <div key={plan._id} className="bg-slate-800 border border-slate-700 rounded-lg p-3">
+                    <div className="mb-2">
+                      <p className="text-white text-base font-semibold mb-1">{plan.name}</p>
+                      {plan.freeTrialDays > 0 && (
+                        <p className="text-primary-400 text-xs">{plan.freeTrialDays} day Free Trial</p>
                       )}
                     </div>
-                    {plan.description && (
-                      <p className="text-gray-400 text-xs">{plan.description}</p>
-                    )}
+                    <div className="mb-2">
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-white text-xl font-bold">
+                          {plan.billingVariants.length > 0 ? formatPrice(plan.billingVariants[0].priceCents) : 'N/A'}
+                        </p>
+                        {plan.billingVariants.length > 0 && (
+                          <span className="text-gray-400 text-xs">
+                            per {plan.billingVariants[0].interval === 'day' ? '14 days' : getIntervalText(plan.billingVariants[0].interval)}
+                          </span>
+                        )}
+                      </div>
+                      {plan.description && (
+                        <p className="text-gray-400 text-xs line-clamp-2">{plan.description}</p>
+                      )}
+                    </div>
                   </div>
+                ))}
+                {plans.length > 2 && (
+                  <p className="text-gray-400 text-xs text-center">+{plans.length - 2} more plan{plans.length - 2 > 1 ? 's' : ''}</p>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <p className="text-gray-400 text-sm mb-2">No subscription plans created yet</p>
+                <p className="text-gray-500 text-xs">Click "Edit Plans" to create your first plan</p>
+              </div>
+            )}
+          </div>
+
+          {/* Social Links Section - Right Side */}
+          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-800">
+            <div className="text-center mb-4">
+              <h3 className="text-white text-lg font-semibold mb-1">Connect With Us</h3>
+              <p className="text-gray-400 text-xs">Add your social media links to stay connected</p>
+            </div>
+            
+            {editingSection === 'social' ? (
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-gray-300 text-xs font-medium mb-1">Twitter/X URL</label>
+                  <input
+                    type="url"
+                    value={formData.socialLinks.twitter}
+                    onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, twitter: e.target.value } }))}
+                    placeholder="https://twitter.com/yourhandle"
+                    className="w-full text-white text-xs bg-slate-800 border border-primary-500 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6">
-              <p className="text-gray-400 text-sm mb-2">No subscription plans created yet</p>
-              <p className="text-gray-500 text-xs">Click "Edit Plans" to create your first plan</p>
-            </div>
-          )}
+                <div>
+                  <label className="block text-gray-300 text-xs font-medium mb-1">Instagram URL</label>
+                  <input
+                    type="url"
+                    value={formData.socialLinks.instagram}
+                    onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, instagram: e.target.value } }))}
+                    placeholder="https://instagram.com/yourhandle"
+                    className="w-full text-white text-xs bg-slate-800 border border-primary-500 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-300 text-xs font-medium mb-1">Website URL</label>
+                  <input
+                    type="url"
+                    value={formData.socialLinks.website}
+                    onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, website: e.target.value } }))}
+                    placeholder="https://yourwebsite.com"
+                    className="w-full text-white text-xs bg-slate-800 border border-primary-500 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-300 text-xs font-medium mb-1">TikTok URL</label>
+                  <input
+                    type="url"
+                    value={formData.socialLinks.tiktok}
+                    onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, tiktok: e.target.value } }))}
+                    placeholder="https://tiktok.com/@yourhandle"
+                    className="w-full text-white text-xs bg-slate-800 border border-primary-500 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-300 text-xs font-medium mb-1">YouTube URL</label>
+                  <input
+                    type="url"
+                    value={formData.socialLinks.youtube}
+                    onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, youtube: e.target.value } }))}
+                    placeholder="https://youtube.com/@yourhandle"
+                    className="w-full text-white text-xs bg-slate-800 border border-primary-500 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+                <div className="flex gap-2 justify-center pt-2">
+                  <button
+                    onClick={() => {
+                      handleSave('social')
+                      setEditingSection(null)
+                    }}
+                    className="px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-xs font-medium flex items-center gap-1.5 border border-primary-500"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setEditingSection(null)}
+                    className="px-3 py-1.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors text-xs font-medium border border-slate-600"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {formData.socialLinks?.twitter && (
+                  <a
+                    href={formData.socialLinks.twitter}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors group"
+                  >
+                    <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="w-5 h-5 text-white group-hover:text-primary-400">
+                      <path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"></path>
+                    </svg>
+                    <span className="text-white text-sm font-medium group-hover:text-primary-400">Twitter</span>
+                  </a>
+                )}
+                {formData.socialLinks?.instagram && (
+                  <a
+                    href={formData.socialLinks.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors group"
+                  >
+                    <svg className="w-5 h-5 text-white group-hover:text-primary-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                    </svg>
+                    <span className="text-white text-sm font-medium group-hover:text-primary-400">Instagram</span>
+                  </a>
+                )}
+                {formData.socialLinks?.website && (
+                  <a
+                    href={formData.socialLinks.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors group"
+                  >
+                    <svg className="w-5 h-5 text-white group-hover:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                    </svg>
+                    <span className="text-white text-sm font-medium group-hover:text-primary-400">Website</span>
+                  </a>
+                )}
+                {formData.socialLinks?.tiktok && (
+                  <a
+                    href={formData.socialLinks.tiktok}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors group"
+                  >
+                    <svg className="w-5 h-5 text-white group-hover:text-primary-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                    </svg>
+                    <span className="text-white text-sm font-medium group-hover:text-primary-400">TikTok</span>
+                  </a>
+                )}
+                {formData.socialLinks?.youtube && (
+                  <a
+                    href={formData.socialLinks.youtube}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors group"
+                  >
+                    <svg className="w-5 h-5 text-white group-hover:text-primary-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                    </svg>
+                    <span className="text-white text-sm font-medium group-hover:text-primary-400">YouTube</span>
+                  </a>
+                )}
+                {(!formData.socialLinks?.twitter && !formData.socialLinks?.instagram && !formData.socialLinks?.website && !formData.socialLinks?.tiktok && !formData.socialLinks?.youtube) && (
+                  <p className="text-gray-400 text-xs text-center py-4">No social links added yet</p>
+                )}
+                <div className="w-full flex justify-center mt-2">
+                  <button
+                    onClick={() => setEditingSection('social')}
+                    className="px-3 py-1.5 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1.5 border border-slate-700"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    {(!formData.socialLinks?.twitter && !formData.socialLinks?.instagram && !formData.socialLinks?.website && !formData.socialLinks?.tiktok && !formData.socialLinks?.youtube) ? 'Add Social Links' : 'Edit Social Links'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* How It Works Section */}
