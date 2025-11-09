@@ -40,11 +40,16 @@ router.post('/', [
       return res.status(400).json({ message: 'This handle is already taken' });
     }
 
-    // Check if handle is already in a pending or approved application
-    const existingApplication = await CreatorApplication.findOne({
+    // Check if handle is already in a pending or approved application (excluding current user's application)
+    const existingApplicationQuery = {
       handle: normalizedHandle,
       status: { $in: ['pending', 'approved'] }
-    });
+    };
+    // If user is logged in, exclude their own application
+    if (userId) {
+      existingApplicationQuery.user = { $ne: userId };
+    }
+    const existingApplication = await CreatorApplication.findOne(existingApplicationQuery);
     if (existingApplication) {
       return res.status(400).json({ message: 'This handle is already taken or pending approval' });
     }
