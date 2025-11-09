@@ -94,7 +94,12 @@ export default function CreatorDashboardLayout({
       router.push('/login')
       return
     }
-  }, [isAuthenticated, loading, router])
+    // Check if user has creator role
+    if (!loading && isAuthenticated && user && !user.roles?.includes('creator')) {
+      router.push('/apply')
+      return
+    }
+  }, [isAuthenticated, loading, user, router])
 
   if (loading) {
     return (

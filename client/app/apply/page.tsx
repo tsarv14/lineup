@@ -14,6 +14,7 @@ export default function ApplyPage() {
   const [loading, setLoading] = useState(false)
   const [checkingHandle, setCheckingHandle] = useState(false)
   const [handleAvailable, setHandleAvailable] = useState<boolean | null>(null)
+  const [showSocialModal, setShowSocialModal] = useState(false)
   const [formData, setFormData] = useState({
     handle: '',
     displayName: '',
@@ -233,44 +234,173 @@ export default function ApplyPage() {
             <label className="block text-sm font-medium text-gray-300 mb-3">
               Social Media Links (Optional)
             </label>
-            <div className="space-y-3">
-              <input
-                type="url"
-                placeholder="Twitter/X URL"
-                value={formData.socialLinks.twitter}
-                onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, twitter: e.target.value } }))}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-              />
-              <input
-                type="url"
-                placeholder="Instagram URL"
-                value={formData.socialLinks.instagram}
-                onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, instagram: e.target.value } }))}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-              />
-              <input
-                type="url"
-                placeholder="Website URL"
-                value={formData.socialLinks.website}
-                onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, website: e.target.value } }))}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-              />
-              <input
-                type="url"
-                placeholder="TikTok URL"
-                value={formData.socialLinks.tiktok}
-                onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, tiktok: e.target.value } }))}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-              />
-              <input
-                type="url"
-                placeholder="YouTube URL"
-                value={formData.socialLinks.youtube}
-                onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, youtube: e.target.value } }))}
-                className="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
-              />
-            </div>
+            <button
+              type="button"
+              onClick={() => setShowSocialModal(true)}
+              className="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg hover:border-primary-500 hover:bg-slate-700 transition-all flex items-center justify-center gap-2"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Add Social Links
+            </button>
+            {/* Display added social links */}
+            {(formData.socialLinks.twitter || formData.socialLinks.instagram || formData.socialLinks.website || formData.socialLinks.tiktok || formData.socialLinks.youtube) && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {formData.socialLinks.twitter && (
+                  <span className="px-3 py-1 bg-primary-600/20 text-primary-400 rounded-full text-sm border border-primary-500/30 flex items-center gap-2">
+                    Twitter
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, twitter: '' } }))}
+                      className="hover:text-red-400 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </span>
+                )}
+                {formData.socialLinks.instagram && (
+                  <span className="px-3 py-1 bg-primary-600/20 text-primary-400 rounded-full text-sm border border-primary-500/30 flex items-center gap-2">
+                    Instagram
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, instagram: '' } }))}
+                      className="hover:text-red-400 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </span>
+                )}
+                {formData.socialLinks.website && (
+                  <span className="px-3 py-1 bg-primary-600/20 text-primary-400 rounded-full text-sm border border-primary-500/30 flex items-center gap-2">
+                    Website
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, website: '' } }))}
+                      className="hover:text-red-400 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </span>
+                )}
+                {formData.socialLinks.tiktok && (
+                  <span className="px-3 py-1 bg-primary-600/20 text-primary-400 rounded-full text-sm border border-primary-500/30 flex items-center gap-2">
+                    TikTok
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, tiktok: '' } }))}
+                      className="hover:text-red-400 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </span>
+                )}
+                {formData.socialLinks.youtube && (
+                  <span className="px-3 py-1 bg-primary-600/20 text-primary-400 rounded-full text-sm border border-primary-500/30 flex items-center gap-2">
+                    YouTube
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, youtube: '' } }))}
+                      className="hover:text-red-400 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </span>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Social Links Modal */}
+          {showSocialModal && (
+            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+              <div className="bg-slate-900 rounded-lg border border-slate-800 max-w-md w-full p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold text-white">Add Social Media Links</h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowSocialModal(false)}
+                    className="text-gray-400 hover:text-white transition-colors"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Twitter/X URL</label>
+                    <input
+                      type="url"
+                      value={formData.socialLinks.twitter}
+                      onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, twitter: e.target.value } }))}
+                      placeholder="https://twitter.com/yourhandle"
+                      className="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Instagram URL</label>
+                    <input
+                      type="url"
+                      value={formData.socialLinks.instagram}
+                      onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, instagram: e.target.value } }))}
+                      placeholder="https://instagram.com/yourhandle"
+                      className="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Website URL</label>
+                    <input
+                      type="url"
+                      value={formData.socialLinks.website}
+                      onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, website: e.target.value } }))}
+                      placeholder="https://yourwebsite.com"
+                      className="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">TikTok URL</label>
+                    <input
+                      type="url"
+                      value={formData.socialLinks.tiktok}
+                      onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, tiktok: e.target.value } }))}
+                      placeholder="https://tiktok.com/@yourhandle"
+                      className="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">YouTube URL</label>
+                    <input
+                      type="url"
+                      value={formData.socialLinks.youtube}
+                      onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, youtube: e.target.value } }))}
+                      placeholder="https://youtube.com/@yourhandle"
+                      className="w-full px-4 py-3 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+                <div className="mt-6 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowSocialModal(false)}
+                    className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Experience */}
           <div>
