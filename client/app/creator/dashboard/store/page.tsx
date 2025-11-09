@@ -58,12 +58,28 @@ export default function StorePage() {
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 's' && editingSection) {
         e.preventDefault()
-        handleSave()
+        // Quick save
+        const quickSave = async () => {
+          try {
+            if (!formData.handle || !formData.displayName) {
+              toast.error('Handle and display name are required')
+              return
+            }
+            await api.put('/creator/storefront', formData)
+            setStorefront(formData)
+            setEditingSection(null)
+            toast.success('Changes saved!', { duration: 2000 })
+            await fetchStorefront()
+          } catch (error: any) {
+            toast.error(error.response?.data?.message || 'Failed to save changes')
+          }
+        }
+        quickSave()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [editingSection])
+  }, [editingSection, formData])
 
   const fetchStorefront = async () => {
     try {
