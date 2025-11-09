@@ -87,7 +87,7 @@ export default function CustomerPreviewPage() {
 
       // Fetch plans
       const plansResponse = await api.get('/creator/plans')
-      const fetchedPlans = plansResponse.data.filter((p: Plan) => !(p as any).archived))
+      const fetchedPlans = plansResponse.data.filter((p: Plan) => !(p as any).archived)
       setPlans(fetchedPlans)
       if (fetchedPlans.length > 0) {
         setSelectedPlan(fetchedPlans[0])
