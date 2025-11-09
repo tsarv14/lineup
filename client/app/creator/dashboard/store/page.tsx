@@ -376,191 +376,231 @@ export default function StorePage() {
             )}
           </div>
         </div>
-          
-          <div className="space-y-4 mb-6">
-            <div className="relative">
-              {editingSection === 'description' ? (
-                <div className="space-y-2">
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Description"
-                    className="w-full text-white text-lg font-semibold bg-slate-800 border border-primary-500 rounded px-3 py-2"
-                    rows={2}
-                  />
-                  <div className="flex gap-2 justify-end">
-                    <button
-                      onClick={() => {
-                        handleSave('description')
-                        setEditingSection(null)
-                      }}
-                      className="px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-xs font-medium flex items-center gap-1.5 border border-primary-500"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      Save
-                    </button>
-                    <button
-                      onClick={() => setEditingSection(null)}
-                      className="px-3 py-1.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors text-xs font-medium border border-slate-600"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-start justify-between gap-4">
-                  <p className="text-white text-lg font-semibold flex-1">
-                    {formData.description || 'The best picks from the best experts'}
-                  </p>
-                  <button
-                    onClick={() => setEditingSection('description')}
-                    className="px-2 py-1 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1 border border-slate-700 flex-shrink-0"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Edit
-                  </button>
-                </div>
-              )}
-            </div>
-            <div className="relative">
-              {editingSection === 'about' ? (
-                <div className="space-y-2">
-                  <textarea
-                    value={formData.aboutText}
-                    onChange={(e) => setFormData(prev => ({ ...prev, aboutText: e.target.value }))}
-                    placeholder="About text"
-                    className="w-full text-gray-400 text-base bg-slate-800 border border-primary-500 rounded px-3 py-2"
-                    rows={4}
-                  />
-                  <div className="flex gap-2 justify-end">
-                    <button
-                      onClick={() => {
-                        handleSave('about')
-                        setEditingSection(null)
-                      }}
-                      className="px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-xs font-medium flex items-center gap-1.5 border border-primary-500"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      Save
-                    </button>
-                    <button
-                      onClick={() => setEditingSection(null)}
-                      className="px-3 py-1.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors text-xs font-medium border border-slate-600"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-start justify-between gap-4">
-                  <p className="text-gray-400 text-base flex-1">
-                    {formData.aboutText || ''}
-                  </p>
-                  <button
-                    onClick={() => setEditingSection('about')}
-                    className="px-2 py-1 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1 border border-slate-700 flex-shrink-0"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                    </svg>
-                    Edit
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4 flex-wrap">
-            {plans.length > 0 && (
-              <div className="flex gap-2">
-                {plans.map((plan) => (
-                  <button
-                    key={plan._id}
-                    className="px-6 py-3 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-semibold"
-                  >
-                    Subscribe
-                    <span className="block text-xs font-normal mt-1">
-                      {plan.billingVariants.length > 0
-                        ? `${formatPrice(plan.billingVariants[0].priceCents)} per ${getIntervalText(plan.billingVariants[0].interval)}`
-                        : 'Select Plan'}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-            <div className="flex items-center gap-2">
-              <Link
-                href={formData.handle ? `/creator/${formData.handle}/picks` : '#'}
-                className="px-4 py-2 bg-transparent border border-white/20 text-white rounded-lg hover:bg-white/10 transition-colors"
-              >
-                <p className="text-sm font-medium">See Picks</p>
-              </Link>
-              <Link
-                href="/login"
-                className="px-4 py-2 bg-transparent border border-white/20 text-white rounded-lg hover:bg-white/10 transition-colors"
-              >
-                <p className="text-sm font-medium">Login</p>
-              </Link>
-              {editingSection === 'social' ? (
-                <input
-                  type="text"
-                  value={formData.socialLinks.twitter}
-                  onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, twitter: e.target.value } }))}
-                  placeholder="Twitter URL"
-                  className="px-3 py-2 bg-slate-800 border border-primary-500 rounded text-white text-sm"
+        {/* Description Section */}
+        <div className="mb-12 bg-slate-900/50 rounded-lg p-8 border border-slate-800">
+          <div className="relative">
+            {editingSection === 'description' ? (
+              <div className="space-y-4">
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Add a description for your store..."
+                  className="w-full text-white text-lg font-semibold bg-slate-800 border border-primary-500 rounded px-4 py-3 min-h-[100px]"
+                  rows={3}
                 />
-              ) : formData.socialLinks?.twitter ? (
-                <a
-                  href={formData.socialLinks.twitter}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 border border-white/20 rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="w-5 h-5 text-white">
-                    <path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"></path>
-                  </svg>
-                </a>
-              ) : null}
-              {editingSection === 'social' ? (
-                <div className="flex gap-2">
+                <div className="flex gap-2 justify-center">
                   <button
                     onClick={() => {
-                      handleSave('social')
+                      handleSave('description')
                       setEditingSection(null)
                     }}
-                    className="px-2 py-1 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-xs font-medium flex items-center gap-1 border border-primary-500"
+                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium flex items-center gap-2 border border-primary-500"
                   >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                     Save
                   </button>
                   <button
                     onClick={() => setEditingSection(null)}
-                    className="px-2 py-1 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors text-xs font-medium border border-slate-600"
+                    className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors text-sm font-medium border border-slate-600"
                   >
                     Cancel
                   </button>
                 </div>
-              ) : (
+              </div>
+            ) : (
+              <div className="text-center">
+                <p className="text-white text-lg font-semibold mb-4">
+                  {formData.description || 'The best picks from the best experts'}
+                </p>
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => setEditingSection('description')}
+                    className="px-3 py-1.5 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1.5 border border-slate-700"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit Description
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* About Text Section */}
+        <div className="mb-12 bg-slate-900/50 rounded-lg p-8 border border-slate-800">
+          <div className="relative">
+            {editingSection === 'about' ? (
+              <div className="space-y-4">
+                <textarea
+                  value={formData.aboutText}
+                  onChange={(e) => setFormData(prev => ({ ...prev, aboutText: e.target.value }))}
+                  placeholder="Tell your story... Add information about your store, your expertise, and what makes you unique."
+                  className="w-full text-gray-300 text-base bg-slate-800 border border-primary-500 rounded px-4 py-3 min-h-[200px] leading-relaxed"
+                  rows={8}
+                />
+                <div className="flex gap-2 justify-center">
+                  <button
+                    onClick={() => {
+                      handleSave('about')
+                      setEditingSection(null)
+                    }}
+                    className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium flex items-center gap-2 border border-primary-500"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setEditingSection(null)}
+                    className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors text-sm font-medium border border-slate-600"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center">
+                <p className="text-gray-300 text-base leading-relaxed mb-4 whitespace-pre-wrap">
+                  {formData.aboutText || ''}
+                </p>
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => setEditingSection('about')}
+                    className="px-3 py-1.5 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1.5 border border-slate-700"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Edit About
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Social Links Section - Completely Redesigned */}
+        <div className="mb-12 bg-slate-900/50 rounded-lg p-8 border border-slate-800">
+          <div className="text-center mb-6">
+            <h3 className="text-white text-xl font-semibold mb-2">Connect With Us</h3>
+            <p className="text-gray-400 text-sm">Add your social media links to stay connected</p>
+          </div>
+          
+          {editingSection === 'social' ? (
+            <div className="space-y-4 max-w-md mx-auto">
+              <div>
+                <label className="block text-gray-300 text-sm font-medium mb-2">Twitter/X URL</label>
+                <input
+                  type="url"
+                  value={formData.socialLinks.twitter}
+                  onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, twitter: e.target.value } }))}
+                  placeholder="https://twitter.com/yourhandle"
+                  className="w-full text-white text-sm bg-slate-800 border border-primary-500 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-300 text-sm font-medium mb-2">Instagram URL</label>
+                <input
+                  type="url"
+                  value={formData.socialLinks.instagram}
+                  onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, instagram: e.target.value } }))}
+                  placeholder="https://instagram.com/yourhandle"
+                  className="w-full text-white text-sm bg-slate-800 border border-primary-500 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              <div>
+                <label className="block text-gray-300 text-sm font-medium mb-2">Website URL</label>
+                <input
+                  type="url"
+                  value={formData.socialLinks.website}
+                  onChange={(e) => setFormData(prev => ({ ...prev, socialLinks: { ...prev.socialLinks, website: e.target.value } }))}
+                  placeholder="https://yourwebsite.com"
+                  className="w-full text-white text-sm bg-slate-800 border border-primary-500 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+              <div className="flex gap-2 justify-center pt-4">
+                <button
+                  onClick={() => {
+                    handleSave('social')
+                    setEditingSection(null)
+                  }}
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium flex items-center gap-2 border border-primary-500"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Save
+                </button>
+                <button
+                  onClick={() => setEditingSection(null)}
+                  className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors text-sm font-medium border border-slate-600"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center gap-6 flex-wrap">
+              {formData.socialLinks?.twitter ? (
+                <a
+                  href={formData.socialLinks.twitter}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors group"
+                >
+                  <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="w-6 h-6 text-white group-hover:text-primary-400">
+                    <path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"></path>
+                  </svg>
+                  <span className="text-white font-medium group-hover:text-primary-400">Twitter</span>
+                </a>
+              ) : null}
+              {formData.socialLinks?.instagram ? (
+                <a
+                  href={formData.socialLinks.instagram}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors group"
+                >
+                  <svg className="w-6 h-6 text-white group-hover:text-primary-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                  </svg>
+                  <span className="text-white font-medium group-hover:text-primary-400">Instagram</span>
+                </a>
+              ) : null}
+              {formData.socialLinks?.website ? (
+                <a
+                  href={formData.socialLinks.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 px-6 py-3 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition-colors group"
+                >
+                  <svg className="w-6 h-6 text-white group-hover:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                  </svg>
+                  <span className="text-white font-medium group-hover:text-primary-400">Website</span>
+                </a>
+              ) : null}
+              {(!formData.socialLinks?.twitter && !formData.socialLinks?.instagram && !formData.socialLinks?.website) && (
+                <p className="text-gray-400 text-sm">No social links added yet</p>
+              )}
+              <div className="w-full flex justify-center mt-4">
                 <button
                   onClick={() => setEditingSection('social')}
-                  className="px-2 py-1 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1 border border-slate-700"
+                  className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium flex items-center gap-2 border border-slate-700"
                 >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                   </svg>
-                  Edit Social
+                  {(!formData.socialLinks?.twitter && !formData.socialLinks?.instagram && !formData.socialLinks?.website) ? 'Add Social Links' : 'Edit Social Links'}
                 </button>
-              )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Subscription Plans Section */}
