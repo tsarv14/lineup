@@ -7,7 +7,8 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "seed:capper": "node scripts/seedCapper.js",
-    "create:user": "node scripts/createUser.js"
+    "create:user": "node scripts/createUser.js",
+    "grant:admin": "node scripts/grantAdmin.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
