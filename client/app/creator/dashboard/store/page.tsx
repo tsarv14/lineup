@@ -185,166 +185,9 @@ export default function StorePage() {
 
   return (
     <div className="min-h-screen bg-black">
-
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header Section */}
-        <div className="pt-8 pb-6 relative group">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <div className="relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
-                {editingSection === 'logo' ? (
-                  <div className="w-full h-full bg-slate-800 border-2 border-primary-500 flex items-center justify-center">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => e.target.files?.[0] && handleFileUpload('logoImage', e.target.files[0])}
-                      className="hidden"
-                      id="logo-upload"
-                    />
-                    <label htmlFor="logo-upload" className="cursor-pointer text-white text-xs text-center px-3 py-2 bg-primary-600 rounded hover:bg-primary-700">
-                      {uploading === 'logoImage' ? 'Uploading...' : 'Upload Logo'}
-                    </label>
-                  </div>
-                ) : formData.logoImage ? (
-                  <Image
-                    src={formData.logoImage}
-                    alt="Storefront Logo"
-                    fill
-                    className="object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-primary-500 flex items-center justify-center text-white text-2xl font-bold">
-                    {formData.displayName?.charAt(0) || user?.username?.charAt(0) || 'S'}
-                  </div>
-                )}
-              </div>
-              <div className="flex-1">
-                {editingSection === 'info' ? (
-                  <div className="flex flex-col gap-2">
-                    <input
-                      type="text"
-                      value={formData.handle}
-                      onChange={(e) => setFormData(prev => ({ ...prev, handle: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
-                      placeholder="Handle (URL slug)"
-                      className="text-white text-sm bg-slate-800 border border-primary-500 rounded px-3 py-2"
-                    />
-                    <input
-                      type="text"
-                      value={formData.displayName}
-                      onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
-                      placeholder="Display Name"
-                      className="text-white text-xl font-semibold bg-slate-800 border border-primary-500 rounded px-3 py-2"
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-white text-xl font-semibold">{formData.displayName || 'Your Store Name'}</p>
-                    {formData.handle && (
-                      <p className="text-gray-400 text-sm">@{formData.handle}</p>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {formData.socialLinks?.twitter && (
-                  <a
-                    href={formData.socialLinks.twitter}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                  >
-                    <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className="w-5 h-5 text-white">
-                      <path d="M389.2 48h70.6L305.6 224.2 487 464H345L233.7 318.6 106.5 464H35.8L200.7 275.5 26.8 48H172.4L272.9 180.9 389.2 48zM364.4 421.8h39.1L151.1 88h-42L364.4 421.8z"></path>
-                    </svg>
-                  </a>
-                )}
-              </div>
-            </div>
-            {plans.length > 0 && (
-              <button className="px-6 py-3 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-semibold flex items-center gap-2">
-                Subscribe
-                <span className="text-sm font-normal text-gray-600">
-                  {plans[0].billingVariants.length > 0
-                    ? `${formatPrice(plans[0].billingVariants[0].priceCents)} per ${getIntervalText(plans[0].billingVariants[0].interval)}`
-                    : 'Select Plan'}
-                </span>
-                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
-                  <path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"></path>
-                </svg>
-              </button>
-            )}
-          </div>
-          {/* Edit buttons for header section */}
-          <div className="flex gap-2 mt-4 justify-end">
-            {editingSection === 'logo' ? (
-              <button
-                onClick={() => {
-                  handleSave('logo')
-                  setEditingSection(null)
-                }}
-                className="px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-xs font-medium flex items-center gap-1.5 border border-primary-500"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Save
-              </button>
-            ) : (
-              <button
-                onClick={() => setEditingSection('logo')}
-                className="px-3 py-1.5 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1.5 border border-slate-700"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Edit Logo
-              </button>
-            )}
-            {editingSection === 'logo' && (
-              <button
-                onClick={() => setEditingSection(null)}
-                className="px-3 py-1.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors text-xs font-medium flex items-center gap-1.5 border border-slate-600"
-              >
-                Cancel
-              </button>
-            )}
-            {editingSection === 'info' ? (
-              <button
-                onClick={() => {
-                  handleSave('info')
-                  setEditingSection(null)
-                }}
-                className="px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-xs font-medium flex items-center gap-1.5 border border-primary-500"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                Save
-              </button>
-            ) : (
-              <button
-                onClick={() => setEditingSection('info')}
-                className="px-3 py-1.5 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1.5 border border-slate-700"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-                Edit Info
-              </button>
-            )}
-            {editingSection === 'info' && (
-              <button
-                onClick={() => setEditingSection(null)}
-                className="px-3 py-1.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors text-xs font-medium flex items-center gap-1.5 border border-slate-600"
-              >
-                Cancel
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Banner Section */}
-        <div className="relative w-full h-64 md:h-96 mb-8 rounded-lg overflow-hidden group">
+        {/* Banner Section - Moved to Top */}
+        <div className="relative w-full h-64 md:h-96 mb-8 rounded-lg overflow-hidden group mt-8">
           {editingSection === 'banner' ? (
             <div className="w-full h-full bg-slate-800 border-2 border-primary-500 flex items-center justify-center">
               <input
@@ -407,32 +250,132 @@ export default function StorePage() {
           </div>
         </div>
 
-        {/* Storefront Info Section */}
-        <div className="mb-12 relative group">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex items-center gap-4">
-              <div className="relative w-16 h-16 rounded-full overflow-hidden">
-                {formData.logoImage ? (
-                  <Image
-                    src={formData.logoImage}
-                    alt="Store Logo"
-                    fill
-                    className="object-cover"
+        {/* Store Name Section - Underneath Banner */}
+        <div className="mb-12 text-center relative">
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <div className="relative w-20 h-20 rounded-full overflow-hidden flex-shrink-0">
+              {editingSection === 'logo' ? (
+                <div className="w-full h-full bg-slate-800 border-2 border-primary-500 flex items-center justify-center">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => e.target.files?.[0] && handleFileUpload('logoImage', e.target.files[0])}
+                    className="hidden"
+                    id="logo-upload"
                   />
-                ) : (
-                  <div className="w-full h-full bg-primary-500 flex items-center justify-center text-white text-2xl font-bold">
-                    {formData.displayName?.charAt(0) || user?.username?.charAt(0) || 'S'}
-                  </div>
-                )}
-              </div>
-              <div>
-                <p className="text-white text-2xl font-bold">{formData.displayName || 'Your Store Name'}</p>
-                {formData.handle && (
-                  <p className="text-gray-400 text-sm">@{formData.handle}</p>
-                )}
-              </div>
+                  <label htmlFor="logo-upload" className="cursor-pointer text-white text-xs text-center px-3 py-2 bg-primary-600 rounded hover:bg-primary-700">
+                    {uploading === 'logoImage' ? 'Uploading...' : 'Upload Logo'}
+                  </label>
+                </div>
+              ) : formData.logoImage ? (
+                <Image
+                  src={formData.logoImage}
+                  alt="Storefront Logo"
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-primary-500 flex items-center justify-center text-white text-3xl font-bold">
+                  {formData.displayName?.charAt(0) || user?.username?.charAt(0) || 'S'}
+                </div>
+              )}
+            </div>
+            <div className="flex-1 max-w-md">
+              {editingSection === 'info' ? (
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="text"
+                    value={formData.handle}
+                    onChange={(e) => setFormData(prev => ({ ...prev, handle: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
+                    placeholder="Handle (URL slug)"
+                    className="text-white text-sm bg-slate-800 border border-primary-500 rounded px-3 py-2"
+                  />
+                  <input
+                    type="text"
+                    value={formData.displayName}
+                    onChange={(e) => setFormData(prev => ({ ...prev, displayName: e.target.value }))}
+                    placeholder="Display Name"
+                    className="text-white text-2xl font-bold bg-slate-800 border border-primary-500 rounded px-3 py-2"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <p className="text-white text-3xl font-bold">{formData.displayName || 'Your Store Name'}</p>
+                  {formData.handle && (
+                    <p className="text-gray-400 text-sm mt-1">@{formData.handle}</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
+          {/* Edit buttons for logo and info */}
+          <div className="flex gap-2 justify-center mt-4">
+            {editingSection === 'logo' ? (
+              <>
+                <button
+                  onClick={() => {
+                    handleSave('logo')
+                    setEditingSection(null)
+                  }}
+                  className="px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-xs font-medium flex items-center gap-1.5 border border-primary-500"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Save
+                </button>
+                <button
+                  onClick={() => setEditingSection(null)}
+                  className="px-3 py-1.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors text-xs font-medium border border-slate-600"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setEditingSection('logo')}
+                className="px-3 py-1.5 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1.5 border border-slate-700"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Edit Logo
+              </button>
+            )}
+            {editingSection === 'info' ? (
+              <>
+                <button
+                  onClick={() => {
+                    handleSave('info')
+                    setEditingSection(null)
+                  }}
+                  className="px-3 py-1.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-xs font-medium flex items-center gap-1.5 border border-primary-500"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Save
+                </button>
+                <button
+                  onClick={() => setEditingSection(null)}
+                  className="px-3 py-1.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors text-xs font-medium border border-slate-600"
+                >
+                  Cancel
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={() => setEditingSection('info')}
+                className="px-3 py-1.5 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1.5 border border-slate-700"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Edit Info
+              </button>
+            )}
+          </div>
+        </div>
           
           <div className="space-y-4 mb-6">
             <div className="relative">
