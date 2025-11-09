@@ -10,11 +10,11 @@ export default function ExampleCreatorPage() {
   const sampleStorefront = {
     displayName: 'VVCREW',
     handle: 'vvcrew',
-    logoImage: 'https://winible-posts-v2.s3.us-west-1.amazonaws.com/1446854036518097495-de86fd68-3f65-4746-bc66-ab2e4ea0d143.jpeg',
-    bannerImage: 'https://winible-posts-v2.s3.us-west-1.amazonaws.com/1446854036518097495-5c8acd22-2b76-495f-b9dd-89ed0e4683e3.jpeg',
+    logoImage: '', // Placeholder - will show default
+    bannerImage: '', // Placeholder - will show gradient
     description: 'The best picks from the best experts',
     aboutText: 'VVCREW uses advanced sports analytics to deliver data-driven picks that win. Our experts analyze player stats, trends, and market shifts to uncover true value plays. We don\'t guess - we calculate. Get smarter, more confident picks and turn data into profit. VVCREW: Where every play brings you closer to victory.',
-    aboutImage: 'https://winible-posts-v2.s3.us-west-1.amazonaws.com/1446854036518097495-e53b0ae9-b892-4da8-904f-1bc35f88ca0c.jpeg',
+    aboutImage: '', // Placeholder - will show default
     sports: ['Football', 'College Football', 'Baseball', 'Basketball', 'Golf', 'Soccer'],
     socialLinks: {
       twitter: 'https://twitter.com/victory_vault_',
@@ -73,12 +73,18 @@ export default function ExampleCreatorPage() {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
               <div className="relative w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
-                <Image
-                  src={sampleStorefront.logoImage}
-                  alt="Storefront Logo"
-                  fill
-                  className="object-cover"
-                />
+                {sampleStorefront.logoImage ? (
+                  <Image
+                    src={sampleStorefront.logoImage}
+                    alt="Storefront Logo"
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-primary-500 flex items-center justify-center text-white text-2xl font-bold">
+                    {sampleStorefront.displayName.charAt(0)}
+                  </div>
+                )}
               </div>
               <p className="text-white text-xl font-semibold">{sampleStorefront.displayName}</p>
               <div className="flex items-center gap-2">
@@ -118,12 +124,16 @@ export default function ExampleCreatorPage() {
 
         {/* Banner Section */}
         <div className="relative w-full h-64 md:h-96 mb-8 rounded-lg overflow-hidden">
-          <Image
-            src={sampleStorefront.bannerImage}
-            alt="Storefront Banner"
-            fill
-            className="object-cover"
-          />
+          {sampleStorefront.bannerImage ? (
+            <Image
+              src={sampleStorefront.bannerImage}
+              alt="Storefront Banner"
+              fill
+              className="object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-r from-primary-600 to-primary-800"></div>
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
         </div>
 
@@ -132,12 +142,18 @@ export default function ExampleCreatorPage() {
           <div className="flex items-center gap-4 mb-6">
             <Link href="/creator/example" className="flex items-center gap-4">
               <div className="relative w-16 h-16 rounded-full overflow-hidden">
-                <Image
-                  src={sampleStorefront.logoImage}
-                  alt="Store Logo"
-                  fill
-                  className="object-cover"
-                />
+                {sampleStorefront.logoImage ? (
+                  <Image
+                    src={sampleStorefront.logoImage}
+                    alt="Store Logo"
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-primary-500 flex items-center justify-center text-white text-2xl font-bold">
+                    {sampleStorefront.displayName.charAt(0)}
+                  </div>
+                )}
               </div>
               <p className="text-white text-2xl font-bold">{sampleStorefront.displayName}</p>
             </Link>
@@ -306,12 +322,20 @@ export default function ExampleCreatorPage() {
               </p>
             </div>
             <div className="relative w-full h-96 rounded-lg overflow-hidden">
-              <Image
-                src={sampleStorefront.aboutImage}
-                alt="about"
-                fill
-                className="object-cover"
-              />
+              {sampleStorefront.aboutImage ? (
+                <Image
+                  src={sampleStorefront.aboutImage}
+                  alt="about"
+                  fill
+                  className="object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-slate-800 flex items-center justify-center">
+                  <div className="text-6xl font-bold text-primary-400/20">
+                    {sampleStorefront.displayName.charAt(0)}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
