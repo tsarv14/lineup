@@ -391,7 +391,7 @@ export default function StorePage() {
           </div>
         </div>
         {/* Description Section */}
-        <div className="mb-12 bg-slate-900/50 rounded-lg p-8 border border-slate-800">
+        <div className="mb-6 bg-slate-900/50 rounded-lg p-4 border border-slate-800">
           <div className="relative">
             {editingSection === 'description' ? (
               <div className="space-y-4">
@@ -399,7 +399,7 @@ export default function StorePage() {
                   value={formData.description}
                   onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Add a description for your store..."
-                  className="w-full text-white text-lg font-semibold bg-slate-800 border border-primary-500 rounded px-4 py-3 min-h-[100px]"
+                  className="w-full text-white text-sm font-medium bg-slate-800 border border-primary-500 rounded px-4 py-3 min-h-[80px]"
                   rows={3}
                 />
                 <div className="flex gap-2 justify-center">
@@ -425,7 +425,7 @@ export default function StorePage() {
               </div>
             ) : (
               <div className="text-center">
-                <p className="text-white text-lg font-semibold mb-4">
+                <p className="text-white text-sm font-medium mb-3">
                   {formData.description || 'Add a description for your store to tell visitors what makes you unique and why they should subscribe to your picks.'}
                 </p>
                 <div className="flex justify-center">
@@ -445,7 +445,7 @@ export default function StorePage() {
         </div>
 
         {/* About Text Section */}
-        <div className="mb-12 bg-slate-900/50 rounded-lg p-8 border border-slate-800">
+        <div className="mb-6 bg-slate-900/50 rounded-lg p-4 border border-slate-800">
           <div className="relative">
             {editingSection === 'about' ? (
               <div className="space-y-4">
@@ -453,8 +453,8 @@ export default function StorePage() {
                   value={formData.aboutText}
                   onChange={(e) => setFormData(prev => ({ ...prev, aboutText: e.target.value }))}
                   placeholder="Tell your story... Add information about your store, your expertise, and what makes you unique."
-                  className="w-full text-gray-300 text-base bg-slate-800 border border-primary-500 rounded px-4 py-3 min-h-[200px] leading-relaxed"
-                  rows={8}
+                  className="w-full text-gray-300 text-sm bg-slate-800 border border-primary-500 rounded px-4 py-3 min-h-[150px] leading-relaxed"
+                  rows={6}
                 />
                 <div className="flex gap-2 justify-center">
                   <button
@@ -479,7 +479,7 @@ export default function StorePage() {
               </div>
             ) : (
               <div className="text-center">
-                <p className="text-gray-300 text-base leading-relaxed mb-4 whitespace-pre-wrap">
+                <p className="text-gray-300 text-sm leading-relaxed mb-3 whitespace-pre-wrap">
                   {formData.aboutText || 'Tell your story here. Share your background, expertise, and what sets your picks apart. This is your chance to connect with potential subscribers and build trust.'}
                 </p>
                 <div className="flex justify-center">
@@ -499,10 +499,10 @@ export default function StorePage() {
         </div>
 
         {/* Social Links Section - Completely Redesigned */}
-        <div className="mb-12 bg-slate-900/50 rounded-lg p-8 border border-slate-800">
-          <div className="text-center mb-6">
-            <h3 className="text-white text-xl font-semibold mb-2">Connect With Us</h3>
-            <p className="text-gray-400 text-sm">Add your social media links to stay connected</p>
+        <div className="mb-6 bg-slate-900/50 rounded-lg p-4 border border-slate-800">
+          <div className="text-center mb-4">
+            <h3 className="text-white text-lg font-semibold mb-1">Connect With Us</h3>
+            <p className="text-gray-400 text-xs">Add your social media links to stay connected</p>
           </div>
           
           {editingSection === 'social' ? (
@@ -664,48 +664,57 @@ export default function StorePage() {
         </div>
 
         {/* Subscription Plans Section */}
-        {plans.length > 0 && (
-          <div id="subscription-plans" className="mb-16">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+        <div className="mb-12 bg-slate-900/50 rounded-lg p-4 border border-slate-800">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-white text-lg font-semibold mb-1">Subscription Plans</h3>
+              <p className="text-gray-400 text-xs">Manage your subscription plans and pricing</p>
+            </div>
+            <button
+              onClick={() => router.push('/creator/dashboard/plans')}
+              className="px-3 py-1.5 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-xs font-medium flex items-center gap-1.5 border border-slate-700"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit Plans
+            </button>
+          </div>
+          {plans.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {plans.slice(0, 3).map((plan) => (
-                <div key={plan._id} className="bg-slate-900 border border-slate-800 rounded-lg p-6">
-                  <div className="mb-4">
-                    <p className="text-white text-xl font-semibold mb-2">{plan.name}</p>
+                <div key={plan._id} className="bg-slate-800 border border-slate-700 rounded-lg p-4">
+                  <div className="mb-3">
+                    <p className="text-white text-lg font-semibold mb-1">{plan.name}</p>
                     {plan.freeTrialDays > 0 && (
-                      <p className="text-primary-400 text-sm">{plan.freeTrialDays} day Free Trial</p>
+                      <p className="text-primary-400 text-xs">{plan.freeTrialDays} day Free Trial</p>
                     )}
                   </div>
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <p className="text-white text-3xl font-bold">
+                  <div className="mb-3">
+                    <div className="flex items-center gap-2 mb-1">
+                      <p className="text-white text-2xl font-bold">
                         {plan.billingVariants.length > 0 ? formatPrice(plan.billingVariants[0].priceCents) : 'N/A'}
                       </p>
+                      {plan.billingVariants.length > 0 && (
+                        <span className="text-gray-400 text-xs">
+                          per {plan.billingVariants[0].interval === 'day' ? '14 days' : getIntervalText(plan.billingVariants[0].interval)}
+                        </span>
+                      )}
                     </div>
                     {plan.description && (
-                      <p className="text-gray-400 text-sm mb-4">{plan.description}</p>
+                      <p className="text-gray-400 text-xs">{plan.description}</p>
                     )}
                   </div>
-                  <Link
-                    href={formData.handle ? `/creator/${formData.handle}/subscribe/${plan._id}` : '#'}
-                    className="block w-full text-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold"
-                  >
-                    Subscribe
-                  </Link>
                 </div>
               ))}
             </div>
-            {plans.length > 3 && (
-              <div className="text-center">
-                <Link
-                  href={formData.handle ? `/creator/${formData.handle}/plans` : '#'}
-                  className="inline-block px-6 py-3 bg-transparent border border-white/20 text-white rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  <p className="text-sm font-medium">View All Plans</p>
-                </Link>
-              </div>
-            )}
-          </div>
-        )}
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-gray-400 text-sm mb-2">No subscription plans created yet</p>
+              <p className="text-gray-500 text-xs">Click "Edit Plans" to create your first plan</p>
+            </div>
+          )}
+        </div>
 
         {/* How It Works Section */}
         <div className="mb-16">
