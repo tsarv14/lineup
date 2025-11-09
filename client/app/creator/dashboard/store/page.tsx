@@ -501,7 +501,7 @@ export default function StorePage() {
         {/* Subscription Plans and Social Links - Side by Side */}
         <div className="mb-12 grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Subscription Plans Section - Left Side */}
-          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-800">
+          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-800 min-h-[400px]">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="text-white text-lg font-semibold mb-1">Subscription Plans</h3>
@@ -557,7 +557,7 @@ export default function StorePage() {
           </div>
 
           {/* Social Links Section - Right Side */}
-          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-800">
+          <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-800 min-h-[400px]">
             <div className="text-center mb-4">
               <h3 className="text-white text-lg font-semibold mb-1">Connect With Us</h3>
               <p className="text-gray-400 text-xs">Add your social media links to stay connected</p>
