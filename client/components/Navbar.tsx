@@ -110,18 +110,16 @@ export default function Navbar() {
             >
               My Picks
             </Link>
-            {user?.roles?.includes('creator') && (
-              <Link
-                href="/creator/dashboard"
-                className={`px-4 py-2 rounded-lg transition-all ${
-                  pathname?.startsWith('/creator/dashboard') 
-                    ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-glow shadow-primary-500/30' 
-                    : 'text-gray-300 hover:text-white hover:bg-black/40 border border-transparent hover:border-slate-700'
-                }`}
-              >
-                Creator Dashboard
-              </Link>
-            )}
+            <Link
+              href="/creator/dashboard"
+              className={`px-4 py-2 rounded-lg transition-all ${
+                pathname?.startsWith('/creator/dashboard') 
+                  ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-glow shadow-primary-500/30' 
+                  : 'text-gray-300 hover:text-white hover:bg-black/40 border border-transparent hover:border-slate-700'
+              }`}
+            >
+              Creator Dashboard
+            </Link>
             <Link
               href="/profile"
               className={`px-4 py-2 rounded-lg transition-all ${
@@ -281,19 +279,17 @@ export default function Navbar() {
                    >
                      My Picks
                    </Link>
-                   {user?.roles?.includes('creator') && (
-                     <Link
-                       href="/creator/dashboard"
-                       onClick={() => setShowMobileMenu(false)}
-                       className={`block px-4 py-2 rounded-lg transition-all ${
-                         pathname?.startsWith('/creator/dashboard') 
-                           ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-glow shadow-primary-500/30' 
-                           : 'text-gray-300 hover:text-white hover:bg-black/40'
-                       }`}
-                     >
-                       Creator Dashboard
-                     </Link>
-                   )}
+                   <Link
+                     href="/creator/dashboard"
+                     onClick={() => setShowMobileMenu(false)}
+                     className={`block px-4 py-2 rounded-lg transition-all ${
+                       pathname?.startsWith('/creator/dashboard') 
+                         ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-glow shadow-primary-500/30' 
+                         : 'text-gray-300 hover:text-white hover:bg-black/40'
+                     }`}
+                   >
+                     Creator Dashboard
+                   </Link>
                    <Link
                      href="/profile"
                      onClick={() => setShowMobileMenu(false)}
