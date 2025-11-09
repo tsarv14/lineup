@@ -94,11 +94,7 @@ export default function CreatorDashboardLayout({
       router.push('/login')
       return
     }
-    // Check if user is a creator
-    if (!loading && isAuthenticated && user && !user.roles?.includes('creator')) {
-      router.push('/')
-    }
-  }, [isAuthenticated, loading, user, router])
+  }, [isAuthenticated, loading, router])
 
   if (loading) {
     return (
@@ -111,7 +107,7 @@ export default function CreatorDashboardLayout({
     )
   }
 
-  if (!isAuthenticated || !user?.roles?.includes('creator')) {
+  if (!isAuthenticated) {
     return null
   }
 

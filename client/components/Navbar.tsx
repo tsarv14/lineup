@@ -117,6 +117,10 @@ export default function Navbar() {
                   ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-glow shadow-primary-500/30' 
                   : 'text-gray-300 hover:text-white hover:bg-black/40 border border-transparent hover:border-slate-700'
               }`}
+              onClick={(e) => {
+                e.preventDefault()
+                router.push('/creator/dashboard')
+              }}
             >
               Creator Dashboard
             </Link>
@@ -281,7 +285,11 @@ export default function Navbar() {
                    </Link>
                    <Link
                      href="/creator/dashboard"
-                     onClick={() => setShowMobileMenu(false)}
+                     onClick={(e) => {
+                       e.preventDefault()
+                       setShowMobileMenu(false)
+                       router.push('/creator/dashboard')
+                     }}
                      className={`block px-4 py-2 rounded-lg transition-all ${
                        pathname?.startsWith('/creator/dashboard') 
                          ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-glow shadow-primary-500/30' 
