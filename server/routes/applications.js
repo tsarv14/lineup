@@ -80,10 +80,11 @@ router.post('/', [
     res.status(201).json({ message: 'Application submitted successfully', application });
   } catch (error) {
     console.error('Submit application error:', error);
+    console.error('Error stack:', error.stack);
     if (error.code === 11000) {
       return res.status(400).json({ message: 'This handle is already taken' });
     }
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 });
 
