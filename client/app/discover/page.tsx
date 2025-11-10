@@ -28,6 +28,7 @@ interface Creator {
     wins: number
     losses: number
     totalUnitsWon: number
+    totalDollarsWon?: number
     transparencyScore: number
   }
 }
@@ -155,7 +156,7 @@ export default function Discover() {
                       <>
                         <div className="text-center mb-3">
                           <p className="text-white font-semibold text-sm">
-                            ${(creator.stats.totalUnitsWon || 0) >= 0 ? '+' : ''}{(creator.stats.totalUnitsWon || 0).toFixed(2)} w/l | {(creator.stats.totalUnitsWon || 0) >= 0 ? '+' : ''}{(creator.stats.totalUnitsWon || 0).toFixed(2)} units w/l | {(creator.stats.roi || 0) >= 0 ? '+' : ''}{(creator.stats.roi || 0).toFixed(1)}% roi
+                            ${(creator.stats.totalDollarsWon || creator.stats.totalUnitsWon * 100 || 0) >= 0 ? '+' : ''}{(creator.stats.totalDollarsWon || creator.stats.totalUnitsWon * 100 || 0).toFixed(2)} w/l | {(creator.stats.totalUnitsWon || 0) >= 0 ? '+' : ''}{(creator.stats.totalUnitsWon || 0).toFixed(2)} units w/l | {(creator.stats.roi || 0) >= 0 ? '+' : ''}{(creator.stats.roi || 0).toFixed(1)}% roi
                           </p>
                         </div>
                         {creator.stats.transparencyScore > 0 && (
@@ -178,7 +179,7 @@ export default function Discover() {
                     ) : (
                       <div className="text-center">
                         <p className="text-white font-semibold text-sm">
-                          $0 w/l | 0 units w/l | 0% roi
+                          $0.00 w/l | 0.00 units w/l | 0.0% roi
                         </p>
                       </div>
                     )}

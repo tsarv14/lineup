@@ -130,6 +130,18 @@ router.get('/:handle/stats', async (req, res) => {
       console.log('Could not fetch transparency score:', err.message);
     }
     
+    // Get creator's unit value for dollar conversion
+    let unitValue = 100; // Default
+    try {
+      const creator = await User.findById(storefront.owner).select('unitValueDefault');
+      unitValue = creator?.unitValueDefault || 100;
+    } catch (err) {
+      console.log('Could not fetch unit value:', err.message);
+    }
+    
+    // Calculate dollar amount won/lost
+    const totalDollarsWon = stats.totalUnitsWon * unitValue;
+    
     res.json({
       winRate: Math.round(winRate * 100) / 100,
       roi: Math.round(roi * 100) / 100,
@@ -137,6 +149,7 @@ router.get('/:handle/stats', async (req, res) => {
       wins: stats.wins,
       losses: stats.losses,
       totalUnitsWon: Math.round(stats.totalUnitsWon * 100) / 100,
+      totalDollarsWon: Math.round(totalDollarsWon * 100) / 100,
       transparencyScore: Math.round(transparencyScore * 10) / 10
     });
   } catch (error) {
