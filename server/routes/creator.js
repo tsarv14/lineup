@@ -2,6 +2,7 @@ const express = require('express');
 const Storefront = require('../models/Storefront');
 const Plan = require('../models/Plan');
 const Pick = require('../models/Pick');
+const ApprovedHandle = require('../models/ApprovedHandle');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
