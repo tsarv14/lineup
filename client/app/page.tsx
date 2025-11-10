@@ -1,13 +1,100 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
+import Image from 'next/image'
+import Link from 'next/link'
+import api from '@/lib/api'
+
+interface Creator {
+  _id: string
+  username: string
+  storefront?: {
+    _id: string
+    handle: string
+    displayName: string
+    description?: string
+    logoImage?: string
+    bannerImage?: string
+  }
+  stats?: {
+    winRate: number
+    roi: number
+    totalPicks: number
+    wins: number
+    losses: number
+    totalUnitsWon: number
+    transparencyScore: number
+  }
+}
 
 export default function Home() {
   const router = useRouter()
   const { isAuthenticated, user, loading } = useAuth()
+  const [featuredCreators, setFeaturedCreators] = useState<Creator[]>([])
+  const [loadingCreators, setLoadingCreators] = useState(true)
+
+  useEffect(() => {
+    fetchFeaturedCreators()
+  }, [])
+
+  const fetchFeaturedCreators = async () => {
+    try {
+      const response = await api.get('/creators')
+      const creatorsData = response.data || []
+      
+      // Get first 3 creators
+      const firstThree = creatorsData.slice(0, 3)
+      
+      // Fetch stats for each creator
+      const creatorsWithStats = await Promise.all(
+        firstThree.map(async (creator: Creator) => {
+          if (creator.storefront?.handle) {
+            try {
+              const statsResponse = await api.get(`/creators/${creator.storefront.handle}/stats`)
+              return { ...creator, stats: statsResponse.data }
+            } catch (error) {
+              // If stats fail, return creator with zero stats
+              return { 
+                ...creator, 
+                stats: {
+                  winRate: 0,
+                  roi: 0,
+                  totalPicks: 0,
+                  wins: 0,
+                  losses: 0,
+                  totalUnitsWon: 0,
+                  transparencyScore: 0
+                }
+              }
+            }
+          }
+          return { 
+            ...creator, 
+            stats: {
+              winRate: 0,
+              roi: 0,
+              totalPicks: 0,
+              wins: 0,
+              losses: 0,
+              totalUnitsWon: 0,
+              transparencyScore: 0
+            }
+          }
+        })
+      )
+      
+      setFeaturedCreators(creatorsWithStats)
+    } catch (error) {
+      console.error('Error fetching featured creators:', error)
+      setFeaturedCreators([])
+    } finally {
+      setLoadingCreators(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -115,60 +202,101 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Sample Creators Section */}
+        {/* Featured Creators Section */}
         <div className="mt-32">
           <h2 className="text-3xl font-bold text-white mb-8 text-center">Featured Creators</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div 
-              onClick={() => router.push('/creator/example')}
-              className="bg-black/40 backdrop-blur-sm rounded-xl border border-slate-800 p-6 hover:border-primary-500/50 transition-all cursor-pointer hover:shadow-glow hover:shadow-primary-500/20 group relative overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative z-10">
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold text-lg shadow-glow">
-                    E
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-white">Example Creator</h3>
-                    <p className="text-sm text-gray-400">Sample Profile</p>
+            {loadingCreators ? (
+              // Loading state
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="bg-black/40 backdrop-blur-sm rounded-xl border border-slate-800 p-6 animate-pulse">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <div className="w-12 h-12 rounded-full bg-slate-700"></div>
+                    <div className="flex-1">
+                      <div className="h-4 bg-slate-700 rounded mb-2"></div>
+                      <div className="h-3 bg-slate-700 rounded w-2/3"></div>
+                    </div>
                   </div>
                 </div>
-                <p className="text-gray-300 text-sm mb-4">View a sample creator profile to see how Lineup works.</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-primary-400 font-semibold">View Example</span>
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      router.push('/creator/example')
-                    }}
-                    className="px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:shadow-glow transition-all text-sm border border-primary-500/50"
+              ))
+            ) : (
+              <>
+                {/* Display actual creators */}
+                {featuredCreators.map((creator, index) => (
+                  <Link
+                    key={creator._id}
+                    href={`/creator/${creator.storefront?.handle}`}
+                    className="bg-black/40 backdrop-blur-sm rounded-xl border border-slate-800 p-6 hover:border-primary-500/50 transition-all cursor-pointer hover:shadow-glow hover:shadow-primary-500/20 group relative overflow-hidden"
                   >
-                    View Store
-                  </button>
-                </div>
-              </div>
-            </div>
-            {[1, 2].map((i) => (
-              <div key={i} className="bg-black/20 backdrop-blur-sm rounded-xl border border-slate-800/50 p-6 opacity-50">
-                <div className="flex items-center space-x-4 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-gray-600 font-bold text-lg">
-                    {String.fromCharCode(64 + i + 1)}
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="relative z-10">
+                      <div className="flex items-center space-x-4 mb-4">
+                        {creator.storefront?.logoImage ? (
+                          <div className="relative w-12 h-12 rounded-full overflow-hidden">
+                            <Image
+                              src={creator.storefront.logoImage}
+                              alt={creator.storefront.displayName}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-r from-primary-500 to-primary-600 flex items-center justify-center text-white font-bold text-lg shadow-glow">
+                            {creator.storefront?.displayName?.charAt(0) || creator.username?.charAt(0) || 'C'}
+                          </div>
+                        )}
+                        <div>
+                          <h3 className="font-semibold text-white">{creator.storefront?.displayName || creator.username}</h3>
+                          <p className="text-sm text-gray-400">@{creator.storefront?.handle || creator.username}</p>
+                        </div>
+                      </div>
+                      {creator.storefront?.description && (
+                        <p className="text-gray-300 text-sm mb-4 line-clamp-2">{creator.storefront.description}</p>
+                      )}
+                      {/* Stats */}
+                      <div className="mb-4 p-3 bg-slate-900/50 rounded-lg border border-slate-700">
+                        <p className="text-white font-semibold text-xs text-center">
+                          ${(creator.stats?.totalUnitsWon || 0) >= 0 ? '+' : ''}{(creator.stats?.totalUnitsWon || 0).toFixed(2)} w/l | {(creator.stats?.totalUnitsWon || 0) >= 0 ? '+' : ''}{(creator.stats?.totalUnitsWon || 0).toFixed(2)} units w/l | {(creator.stats?.roi || 0) >= 0 ? '+' : ''}{(creator.stats?.roi || 0).toFixed(1)}% roi
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-primary-400 font-semibold text-sm">View Profile</span>
+                        <button 
+                          onClick={(e) => {
+                            e.preventDefault()
+                            router.push(`/creator/${creator.storefront?.handle}`)
+                          }}
+                          className="px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-lg hover:shadow-glow transition-all text-sm border border-primary-500/50"
+                        >
+                          View Store
+                        </button>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+                {/* Fill remaining slots with "Coming Soon" */}
+                {Array.from({ length: Math.max(0, 3 - featuredCreators.length) }).map((_, i) => (
+                  <div key={`coming-soon-${i}`} className="bg-black/20 backdrop-blur-sm rounded-xl border border-slate-800/50 p-6 opacity-50">
+                    <div className="flex items-center space-x-4 mb-4">
+                      <div className="w-12 h-12 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-gray-600 font-bold text-lg">
+                        ?
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-500">Coming Soon</h3>
+                        <p className="text-sm text-gray-600">More creators</p>
+                      </div>
+                    </div>
+                    <p className="text-gray-600 text-sm mb-4">More creators will be available soon.</p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600 font-semibold text-sm">Coming Soon</span>
+                      <button disabled className="px-4 py-2 bg-slate-900 border border-slate-800 text-gray-600 rounded-lg cursor-not-allowed text-sm">
+                        View Store
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-500">Coming Soon</h3>
-                    <p className="text-sm text-gray-600">More creators</p>
-                  </div>
-                </div>
-                <p className="text-gray-600 text-sm mb-4">More creators will be available soon.</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600 font-semibold">Coming Soon</span>
-                  <button disabled className="px-4 py-2 bg-slate-900 border border-slate-800 text-gray-600 rounded-lg cursor-not-allowed text-sm">
-                    View Store
-                  </button>
-                </div>
-              </div>
-            ))}
+                ))}
+              </>
+            )}
           </div>
         </div>
       </main>

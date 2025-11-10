@@ -111,6 +111,7 @@ router.get('/:handle/stats', async (req, res) => {
       totalUnitsWon: picks.reduce((sum, p) => sum + (p.profitUnits || 0), 0)
     };
     
+    // Always return stats, even if zero
     const winRate = (stats.wins + stats.losses) > 0 
       ? (stats.wins / (stats.wins + stats.losses)) * 100 
       : 0;
