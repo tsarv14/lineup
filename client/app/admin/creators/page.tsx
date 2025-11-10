@@ -121,7 +121,9 @@ export default function AdminCreatorsPage() {
 
         {creators.length === 0 ? (
           <div className="bg-slate-900/50 rounded-lg border border-slate-800 p-12 text-center">
-            <p className="text-gray-400 text-lg">No creators found</p>
+            <p className="text-gray-400 text-lg mb-4">No creators found</p>
+            <p className="text-gray-500 text-sm mb-4">If you approved a creator but they're not showing up, use the manual creator tool below.</p>
+            <ManualCreatorForm onSuccess={fetchCreators} />
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -208,8 +210,83 @@ export default function AdminCreatorsPage() {
             ))}
           </div>
         )}
+
+        {/* Manual Creator Form */}
+        <div className="mt-8 bg-slate-900/50 rounded-lg border border-slate-800 p-6">
+          <h2 className="text-xl font-semibold text-white mb-4">Manually Add/Fix Creator</h2>
+          <ManualCreatorForm onSuccess={fetchCreators} />
+        </div>
       </div>
     </div>
+  )
+}
+
+function ManualCreatorForm({ onSuccess }: { onSuccess: () => void }) {
+  const [email, setEmail] = useState('')
+  const [handle, setHandle] = useState('')
+  const [displayName, setDisplayName] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      await api.post('/admin/manual-creator', { email, handle, displayName })
+      toast.success('Creator added/fixed successfully!')
+      setEmail('')
+      setHandle('')
+      setDisplayName('')
+      onSuccess()
+    } catch (error: any) {
+      console.error('Error creating creator:', error)
+      toast.error(error.response?.data?.message || 'Failed to create/fix creator')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">User Email (to find user)</label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          placeholder="user@example.com"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">Handle (URL slug)</label>
+        <input
+          type="text"
+          value={handle}
+          onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+          className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          placeholder="tsarv14"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-300 mb-2">Display Name</label>
+        <input
+          type="text"
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+          className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          placeholder="Tsarv Bets"
+          required
+        />
+      </div>
+      <button
+        type="submit"
+        disabled={loading || !handle || !displayName}
+        className="w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {loading ? 'Creating...' : 'Create/Fix Creator'}
+      </button>
+    </form>
   )
 }
 
