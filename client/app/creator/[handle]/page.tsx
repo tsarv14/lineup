@@ -555,20 +555,64 @@ export default function CreatorStorefront() {
               {filteredPicks.slice(0, 10).map((pick) => (
                 <div key={pick._id} className="bg-slate-900 border border-slate-800 rounded-lg p-6 hover:border-primary-500 transition-colors">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-white text-lg font-semibold">{pick.title}</h3>
-                    {pick.isFree ? (
-                      <span className="px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded-full">Free</span>
-                    ) : (
-                      <span className="px-3 py-1 bg-primary-600 text-white text-xs font-semibold rounded-full">
-                        ${((pick.oneOffPriceCents || 0) / 100).toFixed(2)}
-                      </span>
+                    <div className="flex-1">
+                      <h3 className="text-white text-lg font-semibold">{pick.selection || pick.title}</h3>
+                      <div className="flex items-center gap-2 mt-2 flex-wrap">
+                        {pick.isVerified && (
+                          <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs font-semibold border border-green-500/30 flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Verified
+                          </span>
+                        )}
+                        {pick.result && pick.result !== 'pending' && (
+                          <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                            pick.result === 'win' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                            pick.result === 'loss' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                            'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                          }`}>
+                            {pick.result}
+                          </span>
+                        )}
+                        {pick.isFree ? (
+                          <span className="px-2 py-1 bg-green-600 text-white text-xs font-semibold rounded">Free</span>
+                        ) : (
+                          <span className="px-2 py-1 bg-primary-600 text-white text-xs font-semibold rounded">
+                            ${((pick.oneOffPriceCents || 0) / 100).toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2 text-sm">
+                    {pick.sport && (
+                      <div>
+                        <span className="text-gray-400">Sport: </span>
+                        <span className="text-white">{pick.sport}</span>
+                      </div>
+                    )}
+                    {pick.betType && (
+                      <div>
+                        <span className="text-gray-400">Type: </span>
+                        <span className="text-white capitalize">{pick.betType}</span>
+                      </div>
+                    )}
+                    {pick.oddsAmerican !== undefined && (
+                      <div>
+                        <span className="text-gray-400">Odds: </span>
+                        <span className="text-white">{pick.oddsAmerican > 0 ? `+${pick.oddsAmerican}` : pick.oddsAmerican}</span>
+                      </div>
+                    )}
+                    {pick.unitsRisked !== undefined && (
+                      <div>
+                        <span className="text-gray-400">Risk: </span>
+                        <span className="text-white">{pick.unitsRisked} unit{pick.unitsRisked !== 1 ? 's' : ''}</span>
+                      </div>
                     )}
                   </div>
                   {pick.description && (
                     <p className="text-gray-400 text-sm mb-2">{pick.description}</p>
-                  )}
-                  {pick.sport && (
-                    <span className="inline-block px-2 py-1 bg-slate-800 text-gray-300 text-xs rounded mb-2">{pick.sport}</span>
                   )}
                   <Link
                     href={`/creator/${handle}/pick/${pick._id}`}
