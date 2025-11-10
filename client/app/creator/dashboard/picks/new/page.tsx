@@ -16,25 +16,30 @@ export default function NewPickPage() {
   const router = useRouter()
   const { user } = useAuth()
   const [loading, setLoading] = useState(false)
+  const [fetchingUnitValue, setFetchingUnitValue] = useState(true)
   const [plans, setPlans] = useState<Plan[]>([])
+  const [unitValueDefault, setUnitValueDefault] = useState<number>(100)
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
+    // Phase A structured fields
     sport: '',
-    marketType: '',
-    odds: '',
-    stake: '',
+    league: '',
+    gameText: '',
+    betType: 'moneyline' as 'moneyline' | 'spread' | 'total' | 'prop' | 'parlay' | 'other',
+    selection: '',
+    oddsAmerican: '',
+    unitsRisked: '',
+    amountRisked: '',
+    gameStartTime: '',
+    writeUp: '',
+    // Legacy fields
     isFree: true,
     plans: [] as string[],
-    oneOffPriceCents: 0,
-    eventDate: '',
-    scheduledAt: '',
-    tags: [] as string[],
-    media: [] as Array<{ url: string; type: 'image' | 'video' }>
+    oneOffPriceCents: 0
   })
 
   useEffect(() => {
     fetchPlans()
+    fetchUnitValue()
   }, [])
 
   const fetchPlans = async () => {
@@ -45,6 +50,38 @@ export default function NewPickPage() {
       console.error('Error fetching plans:', error)
     }
   }
+
+  const fetchUnitValue = async () => {
+    try {
+      const response = await api.get('/creator/stats')
+      if (response.data?.unitValueDefault) {
+        setUnitValueDefault(response.data.unitValueDefault)
+      }
+    } catch (error) {
+      console.error('Error fetching unit value:', error)
+    } finally {
+      setFetchingUnitValue(false)
+    }
+  }
+
+  // Auto-sync units and amount
+  useEffect(() => {
+    if (formData.unitsRisked && unitValueDefault) {
+      const calculatedAmount = parseFloat(formData.unitsRisked) * unitValueDefault
+      if (!formData.amountRisked || Math.abs(parseFloat(formData.amountRisked) - calculatedAmount) > 0.01) {
+        setFormData(prev => ({ ...prev, amountRisked: calculatedAmount.toFixed(2) }))
+      }
+    }
+  }, [formData.unitsRisked, unitValueDefault])
+
+  useEffect(() => {
+    if (formData.amountRisked && unitValueDefault) {
+      const calculatedUnits = parseFloat(formData.amountRisked) / unitValueDefault
+      if (!formData.unitsRisked || Math.abs(parseFloat(formData.unitsRisked) - calculatedUnits) > 0.01) {
+        setFormData(prev => ({ ...prev, unitsRisked: calculatedUnits.toFixed(2) }))
+      }
+    }
+  }, [formData.amountRisked, unitValueDefault])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
@@ -66,23 +103,99 @@ export default function NewPickPage() {
     }
   }
 
+  const validateAmericanOdds = (odds: string): boolean => {
+    const num = parseInt(odds)
+    return !isNaN(num) && num >= -10000 && num <= 10000 && num !== 0
+  }
+
+  const calculateTimeBeforeStart = (gameStartTime: string): string => {
+    if (!gameStartTime) return ''
+    const start = new Date(gameStartTime)
+    const now = new Date()
+    const diffMs = start.getTime() - now.getTime()
+    
+    if (diffMs < 0) return 'Game has already started'
+    
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMins / 60)
+    const diffDays = Math.floor(diffHours / 24)
+    
+    if (diffDays > 0) return `${diffDays} day${diffDays > 1 ? 's' : ''} before start`
+    if (diffHours > 0) return `${diffHours} hour${diffHours > 1 ? 's' : ''} before start`
+    if (diffMins > 0) return `${diffMins} minute${diffMins > 1 ? 's' : ''} before start`
+    return 'Less than 1 minute before start'
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      await api.post('/creator/picks', {
-        ...formData,
-        eventDate: formData.eventDate || undefined
-      })
+      // Validation
+      if (!formData.sport || !formData.betType || !formData.selection || !formData.oddsAmerican || !formData.unitsRisked) {
+        toast.error('Please fill in all required fields')
+        setLoading(false)
+        return
+      }
+
+      if (!formData.gameStartTime) {
+        toast.error('Game start time is required')
+        setLoading(false)
+        return
+      }
+
+      if (!validateAmericanOdds(formData.oddsAmerican)) {
+        toast.error('Invalid American odds. Must be between -10000 and +10000, excluding 0.')
+        setLoading(false)
+        return
+      }
+
+      const gameStart = new Date(formData.gameStartTime)
+      const now = new Date()
+      if (gameStart <= now) {
+        toast.error('Game start time must be in the future')
+        setLoading(false)
+        return
+      }
+
+      const payload = {
+        sport: formData.sport,
+        league: formData.league || formData.sport,
+        gameText: formData.gameText || null,
+        betType: formData.betType,
+        selection: formData.selection,
+        oddsAmerican: parseInt(formData.oddsAmerican),
+        unitsRisked: parseFloat(formData.unitsRisked),
+        amountRisked: formData.amountRisked ? Math.round(parseFloat(formData.amountRisked) * 100) : undefined,
+        gameStartTime: formData.gameStartTime,
+        writeUp: formData.writeUp || null,
+        isFree: formData.isFree,
+        plans: formData.plans,
+        oneOffPriceCents: formData.oneOffPriceCents
+      }
+
+      await api.post('/creator/picks', payload)
 
       toast.success('Pick created successfully!')
       router.push('/creator/dashboard/picks')
     } catch (error: any) {
+      console.error('Create pick error:', error)
       toast.error(error.response?.data?.message || 'Failed to create pick')
     } finally {
       setLoading(false)
     }
+  }
+
+  const isVerified = formData.gameStartTime && new Date(formData.gameStartTime) > new Date()
+  const timeBeforeStart = calculateTimeBeforeStart(formData.gameStartTime)
+  const estimatedAmount = formData.unitsRisked ? (parseFloat(formData.unitsRisked) * unitValueDefault).toFixed(2) : '0.00'
+
+  if (fetchingUnitValue) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+      </div>
+    )
   }
 
   return (
@@ -104,258 +217,359 @@ export default function NewPickPage() {
             </svg>
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-white">Create New Pick</h1>
-            <p className="text-gray-400 mt-1">Share your latest sports prediction with subscribers</p>
+            <h1 className="text-3xl font-bold text-white">Post a Pick</h1>
+            <p className="text-gray-400 mt-1">Create a structured, verifiable pick with units</p>
           </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-black/40 backdrop-blur-sm rounded-xl border border-slate-800 p-8 space-y-8 shadow-lg shadow-black/20">
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
-            <svg className="w-4 h-4 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            Pick Title *
-          </label>
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            required
-            className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600"
-            placeholder="Lakers vs Warriors - Lakers Win"
-          />
-          <p className="text-xs text-gray-500">Make it clear and compelling</p>
-        </div>
-
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
-            <svg className="w-4 h-4 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-            </svg>
-            Description
-          </label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            rows={6}
-            className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all resize-none placeholder:text-gray-600"
-            placeholder="Detailed analysis and reasoning for your pick..."
-          />
-          <p className="text-xs text-gray-500">Provide context and analysis to help subscribers understand your pick</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
-              <svg className="w-4 h-4 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-              </svg>
-              Sport
-            </label>
-            <input
-              type="text"
-              name="sport"
-              value={formData.sport}
-              onChange={handleChange}
-              className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600"
-              placeholder="NBA, NFL, etc."
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
-              <svg className="w-4 h-4 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-              Market Type
-            </label>
-            <select
-              name="marketType"
-              value={formData.marketType}
-              onChange={handleChange}
-              className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all"
-            >
-              <option value="">Select market type</option>
-              <option value="spread">Spread</option>
-              <option value="moneyline">Moneyline</option>
-              <option value="over-under">Over/Under</option>
-              <option value="prop">Prop</option>
-              <option value="parlay">Parlay</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
-              <svg className="w-4 h-4 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Odds (optional)
-            </label>
-            <input
-              type="text"
-              name="odds"
-              value={formData.odds}
-              onChange={handleChange}
-              className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600"
-              placeholder="-110, +150, etc."
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
-              <svg className="w-4 h-4 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Stake (optional)
-            </label>
-            <input
-              type="text"
-              name="stake"
-              value={formData.stake}
-              onChange={handleChange}
-              className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600"
-              placeholder="1 unit, 2 units, etc."
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Event Date
-            </label>
-            <input
-              type="datetime-local"
-              name="eventDate"
-              value={formData.eventDate}
-              onChange={handleChange}
-              className="w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Schedule Publish (optional)
-            </label>
-            <input
-              type="datetime-local"
-              name="scheduledAt"
-              value={formData.scheduledAt}
-              onChange={handleChange}
-              className="w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-            <p className="text-xs text-gray-400 mt-1">Leave empty to publish immediately</p>
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Tags (comma-separated)
-          </label>
-          <input
-            type="text"
-            name="tags"
-            value={formData.tags.join(', ')}
-            onChange={(e) => {
-              const tags = e.target.value.split(',').map(t => t.trim()).filter(t => t)
-              setFormData({ ...formData, tags })
-            }}
-            className="w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            placeholder="premium, nfl, week-15"
-          />
-        </div>
-
-        <div className="flex items-center space-x-3">
-          <input
-            type="checkbox"
-            name="isFree"
-            checked={formData.isFree}
-            onChange={handleChange}
-            className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-primary-600 focus:ring-primary-500"
-          />
-          <label className="text-sm font-medium text-gray-300">
-            This is a free pick
-          </label>
-        </div>
-
-        {!formData.isFree && (
-          <>
-            {plans.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Available for Plans (select which plans can access this pick)
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Form */}
+        <div className="lg:col-span-2">
+          <form onSubmit={handleSubmit} className="bg-black/40 backdrop-blur-sm rounded-xl border border-slate-800 p-8 space-y-6 shadow-lg shadow-black/20">
+            {/* Sport and League */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+                  Sport *
                 </label>
-                <div className="space-y-2 bg-slate-700/50 rounded-lg p-4 max-h-48 overflow-y-auto">
-                  {plans.map((plan) => (
-                    <label key={plan._id} className="flex items-center space-x-3 cursor-pointer hover:bg-slate-600/50 p-2 rounded">
-                      <input
-                        type="checkbox"
-                        checked={formData.plans.includes(plan._id)}
-                        onChange={() => handlePlanToggle(plan._id)}
-                        className="w-5 h-5 rounded bg-slate-600 border-slate-500 text-primary-600 focus:ring-primary-500"
-                      />
-                      <span className="text-white">{plan.name}</span>
-                    </label>
-                  ))}
-                </div>
+                <select
+                  name="sport"
+                  value={formData.sport}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all"
+                >
+                  <option value="">Select sport</option>
+                  <option value="Football">Football</option>
+                  <option value="College Football">College Football</option>
+                  <option value="Baseball">Baseball</option>
+                  <option value="Basketball">Basketball</option>
+                  <option value="Golf">Golf</option>
+                  <option value="Soccer">Soccer</option>
+                  <option value="Hockey">Hockey</option>
+                  <option value="Tennis">Tennis</option>
+                  <option value="MMA">MMA</option>
+                  <option value="Boxing">Boxing</option>
+                  <option value="Racing">Racing</option>
+                  <option value="Other">Other</option>
+                </select>
               </div>
-            )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
-                One-Time Purchase Price ($)
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+                  League
+                </label>
+                <input
+                  type="text"
+                  name="league"
+                  value={formData.league}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600"
+                  placeholder={formData.sport || 'e.g., NBA, NFL'}
+                />
+                <p className="text-xs text-gray-500">Defaults to sport if not specified</p>
+              </div>
+            </div>
+
+            {/* Game Text */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+                Game (Phase A: Manual Entry) *
               </label>
               <input
-                type="number"
-                step="0.01"
-                min="0"
-                name="oneOffPriceCents"
-                value={formData.oneOffPriceCents / 100}
+                type="text"
+                name="gameText"
+                value={formData.gameText}
                 onChange={handleChange}
-                className="w-full px-4 py-3 bg-slate-700 border border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="0.00"
+                required
+                className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600"
+                placeholder="e.g., Lakers vs Warriors"
               />
-              <p className="text-xs text-gray-400 mt-1">Leave as 0 if this pick is only available through subscription plans</p>
             </div>
-          </>
-        )}
 
-               <div className="flex items-center gap-4 pt-6 border-t border-slate-800">
-                 <button
-                   type="submit"
-                   disabled={loading}
-                   className="px-8 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:shadow-glow hover:shadow-primary-500/30 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed border border-primary-500/50 flex items-center gap-2"
-                 >
-                   {loading ? (
-                     <>
-                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                       Creating...
-                     </>
-                   ) : (
-                     <>
-                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                       </svg>
-                       Create Pick
-                     </>
-                   )}
-                 </button>
-                 <Link
-                   href="/creator/dashboard/picks"
-                   className="px-6 py-3 bg-black/60 text-white rounded-xl hover:bg-black/80 transition-all font-semibold border border-slate-700 hover:border-slate-600"
-                 >
-                   Cancel
-                 </Link>
-               </div>
-      </form>
+            {/* Game Start Time */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+                Game Start Time *
+              </label>
+              <input
+                type="datetime-local"
+                name="gameStartTime"
+                value={formData.gameStartTime}
+                onChange={handleChange}
+                required
+                min={new Date().toISOString().slice(0, 16)}
+                className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all"
+              />
+              {formData.gameStartTime && (
+                <p className={`text-xs ${isVerified ? 'text-green-400' : 'text-red-400'}`}>
+                  {timeBeforeStart}
+                </p>
+              )}
+            </div>
+
+            {/* Bet Type and Selection */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+                  Pick Type *
+                </label>
+                <select
+                  name="betType"
+                  value={formData.betType}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all"
+                >
+                  <option value="moneyline">Moneyline</option>
+                  <option value="spread">Spread</option>
+                  <option value="total">Total (Over/Under)</option>
+                  <option value="prop">Prop</option>
+                  <option value="parlay">Parlay</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+                  Selection *
+                </label>
+                <input
+                  type="text"
+                  name="selection"
+                  value={formData.selection}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600"
+                  placeholder="e.g., Lakers -5.5"
+                />
+              </div>
+            </div>
+
+            {/* Odds */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+                Odds (American) *
+              </label>
+              <input
+                type="text"
+                name="oddsAmerican"
+                value={formData.oddsAmerican}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600"
+                placeholder="-110, +135, etc."
+              />
+              {formData.oddsAmerican && !validateAmericanOdds(formData.oddsAmerican) && (
+                <p className="text-xs text-red-400">Invalid odds. Must be between -10000 and +10000, excluding 0.</p>
+              )}
+            </div>
+
+            {/* Units and Amount */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+                  Units Risked *
+                </label>
+                <input
+                  type="number"
+                  name="unitsRisked"
+                  value={formData.unitsRisked}
+                  onChange={handleChange}
+                  required
+                  min="0"
+                  step="0.01"
+                  className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600"
+                  placeholder="2.0"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+                  Amount Risked ($)
+                </label>
+                <input
+                  type="number"
+                  name="amountRisked"
+                  value={formData.amountRisked}
+                  onChange={handleChange}
+                  min="0"
+                  step="0.01"
+                  className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600"
+                  placeholder="Auto-calculated"
+                />
+                <p className="text-xs text-gray-500">Auto-syncs with units</p>
+              </div>
+            </div>
+
+            {/* Unit Value Display */}
+            <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-300">Unit Value:</span>
+                <span className="text-sm font-semibold text-white">${unitValueDefault} per unit</span>
+              </div>
+              <p className="text-xs text-gray-500 mt-1">
+                Change this in your <Link href="/creator/dashboard/settings" className="text-primary-400 hover:text-primary-300">settings</Link>
+              </p>
+            </div>
+
+            {/* Write-up */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+                Write-up (Optional)
+              </label>
+              <textarea
+                name="writeUp"
+                value={formData.writeUp}
+                onChange={handleChange}
+                rows={6}
+                className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all resize-none placeholder:text-gray-600"
+                placeholder="Detailed analysis and reasoning for your pick..."
+              />
+            </div>
+
+            {/* Legacy fields */}
+            <div className="flex items-center space-x-3 pt-4 border-t border-slate-800">
+              <input
+                type="checkbox"
+                name="isFree"
+                checked={formData.isFree}
+                onChange={handleChange}
+                className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-primary-600 focus:ring-primary-500"
+              />
+              <label className="text-sm font-medium text-gray-300">
+                This is a free pick
+              </label>
+            </div>
+
+            {!formData.isFree && (
+              <>
+                {plans.length > 0 && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Available for Plans
+                    </label>
+                    <div className="space-y-2 bg-slate-800/50 rounded-lg p-4 max-h-48 overflow-y-auto">
+                      {plans.map((plan) => (
+                        <label key={plan._id} className="flex items-center space-x-3 cursor-pointer hover:bg-slate-700/50 p-2 rounded">
+                          <input
+                            type="checkbox"
+                            checked={formData.plans.includes(plan._id)}
+                            onChange={() => handlePlanToggle(plan._id)}
+                            className="w-5 h-5 rounded bg-slate-600 border-slate-500 text-primary-600 focus:ring-primary-500"
+                          />
+                          <span className="text-white">{plan.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    One-Time Purchase Price ($)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    name="oneOffPriceCents"
+                    value={formData.oneOffPriceCents / 100}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all"
+                    placeholder="0.00"
+                  />
+                </div>
+              </>
+            )}
+
+            <div className="flex items-center gap-4 pt-6 border-t border-slate-800">
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-8 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:shadow-glow hover:shadow-primary-500/30 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed border border-primary-500/50 flex items-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Post Pick
+                  </>
+                )}
+              </button>
+              <Link
+                href="/creator/dashboard/picks"
+                className="px-6 py-3 bg-black/60 text-white rounded-xl hover:bg-black/80 transition-all font-semibold border border-slate-700 hover:border-slate-600"
+              >
+                Cancel
+              </Link>
+            </div>
+          </form>
+        </div>
+
+        {/* Preview Panel */}
+        <div className="lg:col-span-1">
+          <div className="bg-black/40 backdrop-blur-sm rounded-xl border border-slate-800 p-6 shadow-lg shadow-black/20 sticky top-8">
+            <h3 className="text-lg font-semibold text-white mb-4">Preview</h3>
+            
+            {formData.selection && formData.sport && (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-400">Selection</p>
+                  <p className="text-white font-medium">{formData.selection}</p>
+                </div>
+                
+                {formData.oddsAmerican && (
+                  <div>
+                    <p className="text-sm text-gray-400">Odds</p>
+                    <p className="text-white font-medium">{formData.oddsAmerican}</p>
+                  </div>
+                )}
+                
+                {formData.unitsRisked && (
+                  <div>
+                    <p className="text-sm text-gray-400">Units Risked</p>
+                    <p className="text-white font-medium">{formData.unitsRisked} units</p>
+                    <p className="text-xs text-gray-500">≈ ${estimatedAmount}</p>
+                  </div>
+                )}
+                
+                {formData.gameStartTime && (
+                  <div>
+                    <p className="text-sm text-gray-400">Posted</p>
+                    <p className={`text-sm font-medium ${isVerified ? 'text-green-400' : 'text-red-400'}`}>
+                      {timeBeforeStart}
+                    </p>
+                    {isVerified && (
+                      <p className="text-xs text-green-400 mt-1">✓ Eligible for verification</p>
+                    )}
+                  </div>
+                )}
+                
+                {formData.gameStartTime && (
+                  <div>
+                    <p className="text-sm text-gray-400">Locked at</p>
+                    <p className="text-white text-sm">
+                      {new Date(formData.gameStartTime).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {(!formData.selection || !formData.sport) && (
+              <p className="text-gray-500 text-sm">Fill in the form to see preview</p>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
-

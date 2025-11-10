@@ -44,6 +44,7 @@ const userSchema = new mongoose.Schema({
   // Creator-related fields
   storefront: { type: mongoose.Schema.Types.ObjectId, ref: 'Storefront' },
   stripeAccountId: { type: String },
+  unitValueDefault: { type: Number, min: 0 }, // Default $ per unit for creators (nullable)
 
   // Compliance & KYC fields
   country: { type: String, trim: true },

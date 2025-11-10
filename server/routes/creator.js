@@ -287,18 +287,41 @@ router.get('/picks', async (req, res) => {
 });
 
 // @route   POST /api/creator/picks
-// @desc    Create a new pick
+// @desc    Create a new structured pick (Phase A: Verified Picks System)
 // @access  Private (creator only)
 router.post('/picks', async (req, res) => {
   try {
     const { 
-      title, description, sport, marketType, odds, stake, 
+      // Phase A structured fields
+      sport, league, gameId, gameText, betType, selection, oddsAmerican,
+      unitsRisked, amountRisked, unitValue, writeUp,
+      // Legacy fields (for backward compatibility)
+      title, description, marketType, odds, stake,
       isFree, plans, oneOffPriceCents, eventDate, scheduledAt, 
-      tags, media 
+      tags, media,
+      // Game timing
+      gameStartTime
     } = req.body;
 
-    if (!title) {
-      return res.status(400).json({ message: 'Pick title is required' });
+    // Phase A validation: require structured pick fields
+    if (!sport || !betType || !selection || oddsAmerican === undefined || !unitsRisked) {
+      return res.status(400).json({ 
+        message: 'Missing required fields: sport, betType, selection, oddsAmerican, unitsRisked' 
+      });
+    }
+
+    if (!gameStartTime) {
+      return res.status(400).json({ message: 'gameStartTime is required' });
+    }
+
+    const gameStart = new Date(gameStartTime);
+    const now = new Date();
+
+    // Business rule: cannot create pick whose gameStartTime <= now
+    if (gameStart <= now) {
+      return res.status(400).json({ 
+        message: 'Cannot create pick: game start time must be in the future' 
+      });
     }
 
     const storefront = await Storefront.findOne({ owner: req.user._id });
@@ -306,19 +329,66 @@ router.post('/picks', async (req, res) => {
       return res.status(400).json({ message: 'Please create a storefront first' });
     }
 
+    // Get creator's unit value
+    const creator = await User.findById(req.user._id);
+    const unitValueAtPost = unitValue || creator.unitValueDefault || 100; // Default $100 per unit
+
+    if (!unitValueAtPost || unitValueAtPost <= 0) {
+      return res.status(400).json({ 
+        message: 'Unit value must be set. Please set your default unit value in settings.' 
+      });
+    }
+
+    // Validate American odds
+    const { americanToDecimal, isValidAmericanOdds } = require('../utils/oddsConverter');
+    if (!isValidAmericanOdds(oddsAmerican)) {
+      return res.status(400).json({ message: 'Invalid American odds' });
+    }
+
+    const oddsDecimal = americanToDecimal(oddsAmerican);
+
+    // Calculate amount risked if not provided
+    const finalAmountRisked = amountRisked || Math.round(unitsRisked * unitValueAtPost);
+
+    // Determine verification status (Phase A: verified if posted before game start)
+    const isVerified = now < gameStart;
+    const verificationSource = isVerified ? 'system' : 'manual';
+
     const pickData = {
       creator: req.user._id,
       storefront: storefront._id,
-      title,
-      description,
+      
+      // Phase A structured fields
       sport,
-      marketType,
-      odds,
-      stake,
+      league: league || sport, // Default league to sport if not provided
+      gameId: gameId || null,
+      gameText: gameText || null,
+      selection,
+      betType,
+      oddsAmerican,
+      oddsDecimal,
+      unitsRisked,
+      amountRisked: finalAmountRisked,
+      unitValueAtPost,
+      gameStartTime: gameStart,
+      writeUp: writeUp || null,
+      
+      // Status and verification
+      status: 'pending',
+      result: 'pending',
+      isVerified,
+      verificationSource,
+      
+      // Legacy fields (for backward compatibility)
+      title: title || `${selection} (${sport})`,
+      description: writeUp || description || null,
+      marketType: marketType || betType,
+      odds: odds || oddsAmerican.toString(),
+      stake: stake || `${unitsRisked} unit${unitsRisked !== 1 ? 's' : ''}`,
       isFree: isFree || false,
       plans: plans || [],
       oneOffPriceCents: oneOffPriceCents || 0,
-      eventDate: eventDate ? new Date(eventDate) : undefined,
+      eventDate: eventDate ? new Date(eventDate) : gameStart,
       scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
       tags: tags || [],
       media: media || []
@@ -331,36 +401,137 @@ router.post('/picks', async (req, res) => {
 
     const pick = new Pick(pickData);
     await pick.save();
+
+    // Create audit log
+    const AuditLog = require('../models/AuditLog');
+    await AuditLog.create({
+      userId: req.user._id,
+      action: 'pick.create',
+      resourceType: 'Pick',
+      resourceId: pick._id,
+      metadata: {
+        sport,
+        betType,
+        selection,
+        unitsRisked,
+        isVerified
+      },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent')
+    });
+
     res.status(201).json(pick);
   } catch (error) {
     console.error('Create pick error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
 // @route   PUT /api/creator/picks/:id
-// @desc    Update a pick
-// @access  Private (creator only)
-router.put('/picks/:id', async (req, res) => {
+// @route   PATCH /api/creator/picks/:id
+// @desc    Update a pick (Phase A: with locking and audit trail)
+// @access  Private (creator only, or admin with reason)
+const updatePickHandler = async (req, res) => {
   try {
     const pick = await Pick.findById(req.params.id);
     if (!pick) {
       return res.status(404).json({ message: 'Pick not found' });
     }
 
-    if (pick.creator.toString() !== req.user._id.toString()) {
+    const isAdmin = req.user.roles && req.user.roles.includes('admin');
+    const isCreator = pick.creator.toString() === req.user._id.toString();
+
+    if (!isCreator && !isAdmin) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
+    // Phase A: Locking rule - no edits allowed after gameStartTime (except admins)
+    const now = new Date();
+    const isLocked = now >= new Date(pick.gameStartTime);
+
+    if (isLocked && !isAdmin) {
+      return res.status(403).json({ 
+        message: 'Pick is locked. Edits are not allowed after game start time.' 
+      });
+    }
+
+    // If admin editing locked pick, require reason
+    if (isLocked && isAdmin && !req.body.reason) {
+      return res.status(400).json({ 
+        message: 'Admin edits to locked picks require a reason' 
+      });
+    }
+
     const { 
-      title, description, sport, marketType, odds, stake, 
+      // Phase A structured fields
+      sport, league, gameText, betType, selection, oddsAmerican,
+      unitsRisked, amountRisked, unitValue, writeUp, gameStartTime,
+      // Legacy fields
+      title, description, marketType, odds, stake, 
       isFree, plans, oneOffPriceCents, eventDate, scheduledAt, 
-      tags, media, result 
+      tags, media, result,
+      // Admin fields
+      reason
     } = req.body;
 
-    if (title) pick.title = title;
+    // Track changes for audit log
+    const changes = [];
+    const oldValues = {};
+
+    // Update Phase A structured fields
+    if (sport !== undefined && pick.sport !== sport) {
+      oldValues.sport = pick.sport;
+      pick.sport = sport;
+      changes.push({ field: 'sport', oldValue: oldValues.sport, newValue: sport });
+    }
+    if (league !== undefined && pick.league !== league) {
+      oldValues.league = pick.league;
+      pick.league = league;
+      changes.push({ field: 'league', oldValue: oldValues.league, newValue: league });
+    }
+    if (selection !== undefined && pick.selection !== selection) {
+      oldValues.selection = pick.selection;
+      pick.selection = selection;
+      changes.push({ field: 'selection', oldValue: oldValues.selection, newValue: selection });
+    }
+    if (betType !== undefined && pick.betType !== betType) {
+      oldValues.betType = pick.betType;
+      pick.betType = betType;
+      changes.push({ field: 'betType', oldValue: oldValues.betType, newValue: betType });
+    }
+    if (oddsAmerican !== undefined && pick.oddsAmerican !== oddsAmerican) {
+      const { americanToDecimal, isValidAmericanOdds } = require('../utils/oddsConverter');
+      if (!isValidAmericanOdds(oddsAmerican)) {
+        return res.status(400).json({ message: 'Invalid American odds' });
+      }
+      oldValues.oddsAmerican = pick.oddsAmerican;
+      pick.oddsAmerican = oddsAmerican;
+      pick.oddsDecimal = americanToDecimal(oddsAmerican);
+      changes.push({ field: 'oddsAmerican', oldValue: oldValues.oddsAmerican, newValue: oddsAmerican });
+    }
+    if (unitsRisked !== undefined && pick.unitsRisked !== unitsRisked) {
+      oldValues.unitsRisked = pick.unitsRisked;
+      pick.unitsRisked = unitsRisked;
+      // Recalculate amount risked if unit value hasn't changed
+      if (!unitValue) {
+        pick.amountRisked = Math.round(unitsRisked * pick.unitValueAtPost);
+      }
+      changes.push({ field: 'unitsRisked', oldValue: oldValues.unitsRisked, newValue: unitsRisked });
+    }
+    if (amountRisked !== undefined && pick.amountRisked !== amountRisked) {
+      oldValues.amountRisked = pick.amountRisked;
+      pick.amountRisked = amountRisked;
+      changes.push({ field: 'amountRisked', oldValue: oldValues.amountRisked, newValue: amountRisked });
+    }
+    if (writeUp !== undefined && pick.writeUp !== writeUp) {
+      oldValues.writeUp = pick.writeUp;
+      pick.writeUp = writeUp;
+      changes.push({ field: 'writeUp', oldValue: oldValues.writeUp, newValue: writeUp });
+    }
+
+    // Update legacy fields
+    if (title !== undefined) pick.title = title;
     if (description !== undefined) pick.description = description;
-    if (sport !== undefined) pick.sport = sport;
     if (marketType !== undefined) pick.marketType = marketType;
     if (odds !== undefined) pick.odds = odds;
     if (stake !== undefined) pick.stake = stake;
@@ -368,27 +539,136 @@ router.put('/picks/:id', async (req, res) => {
     if (plans) pick.plans = plans;
     if (oneOffPriceCents !== undefined) pick.oneOffPriceCents = oneOffPriceCents;
     if (eventDate) pick.eventDate = new Date(eventDate);
-    if (scheduledAt !== undefined) {
-      pick.scheduledAt = scheduledAt ? new Date(scheduledAt) : undefined;
-      // If scheduled time has passed and not published, publish now
-      if (!pick.publishedAt && (!scheduledAt || new Date(scheduledAt) <= new Date())) {
-        pick.publishedAt = new Date();
-      }
-    }
     if (tags !== undefined) pick.tags = tags;
     if (media !== undefined) pick.media = media;
-    if (result !== undefined) {
-      pick.result = result;
-      if (result !== 'pending' && !pick.resolvedAt) {
-        pick.resolvedAt = new Date();
-      }
+
+    // If pick was edited after lock, mark as not verified and flag
+    if (isLocked && changes.length > 0) {
+      pick.isVerified = false;
+      pick.flagged = true;
+      if (!pick.flags) pick.flags = [];
+      pick.flags.push({
+        reason: `Edited after game start by ${isAdmin ? 'admin' : 'creator'}`,
+        flaggedBy: req.user._id,
+        flaggedAt: new Date()
+      });
     }
+
+    // Record edit history
+    if (changes.length > 0) {
+      if (!pick.editHistory) pick.editHistory = [];
+      pick.editHistory.push({
+        userId: req.user._id,
+        oldValue: oldValues,
+        newValue: req.body,
+        changedAt: new Date(),
+        reason: reason || (isAdmin ? 'Admin edit' : 'Creator edit'),
+        isAdminEdit: isAdmin
+      });
+    }
+
     pick.updatedAt = new Date();
 
     await pick.save();
+
+    // Create audit log
+    const AuditLog = require('../models/AuditLog');
+    await AuditLog.create({
+      userId: req.user._id,
+      action: isAdmin ? 'pick.admin_edit' : 'pick.update',
+      resourceType: 'Pick',
+      resourceId: pick._id,
+      metadata: {
+        changes,
+        isLocked,
+        reason: reason || null
+      },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent')
+    });
+
     res.json(pick);
   } catch (error) {
     console.error('Update pick error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+router.put('/picks/:id', updatePickHandler)
+router.patch('/picks/:id', updatePickHandler)
+
+// @route   GET /api/creator/stats
+// @desc    Get creator stats in units and USD (Phase A)
+// @access  Private (creator only)
+router.get('/stats', async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    const picks = await Pick.find({ creator: userId });
+    
+    // Calculate stats
+    const totalPicks = picks.length;
+    const verifiedPicks = picks.filter(p => p.isVerified).length;
+    const gradedPicks = picks.filter(p => p.status === 'graded');
+    
+    const totalUnitsRisked = picks.reduce((sum, p) => sum + (p.unitsRisked || 0), 0);
+    const totalUnitsWon = picks.reduce((sum, p) => sum + (p.profitUnits || 0), 0);
+    const totalAmountRisked = picks.reduce((sum, p) => sum + (p.amountRisked || 0), 0);
+    const totalAmountWon = picks.reduce((sum, p) => sum + (p.profitAmount || 0), 0);
+    
+    const wins = picks.filter(p => p.result === 'win').length;
+    const losses = picks.filter(p => p.result === 'loss').length;
+    const pushes = picks.filter(p => p.result === 'push').length;
+    const winRate = (wins + losses + pushes) > 0 ? (wins / (wins + losses + pushes)) * 100 : 0;
+    
+    const roi = totalUnitsRisked > 0 ? ((totalUnitsWon / totalUnitsRisked) * 100) : 0;
+    
+    res.json({
+      totalPicks,
+      verifiedPicks,
+      gradedPicks,
+      totalUnitsRisked,
+      totalUnitsWon,
+      totalAmountRisked,
+      totalAmountWon,
+      wins,
+      losses,
+      pushes,
+      winRate,
+      roi,
+      unitValueDefault: req.user.unitValueDefault || null
+    });
+  } catch (error) {
+    console.error('Get creator stats error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   PUT /api/creator/settings/unit-value
+// @desc    Update creator's default unit value
+// @access  Private (creator only)
+router.put('/settings/unit-value', async (req, res) => {
+  try {
+    const { unitValueDefault } = req.body;
+    
+    if (!unitValueDefault || unitValueDefault <= 0) {
+      return res.status(400).json({ message: 'Unit value must be greater than 0' });
+    }
+    
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    user.unitValueDefault = unitValueDefault;
+    await user.save();
+    
+    res.json({ 
+      message: 'Unit value updated successfully',
+      unitValueDefault: user.unitValueDefault
+    });
+  } catch (error) {
+    console.error('Update unit value error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
