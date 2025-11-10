@@ -49,12 +49,31 @@ router.put('/storefront', async (req, res) => {
     if (storefront) {
       // Update existing storefront
       if (handle && handle !== storefront.handle) {
-        // Check if new handle is available
-        const existingHandle = await Storefront.findOne({ handle, _id: { $ne: storefront._id } });
-        if (existingHandle) {
+        // Check if new handle is available (check ApprovedHandle collection - single source of truth)
+        const normalizedHandle = handle.toLowerCase().trim();
+        const existingApprovedHandle = await ApprovedHandle.findOne({ 
+          handle: normalizedHandle,
+          storefrontId: { $ne: storefront._id }
+        });
+        if (existingApprovedHandle) {
           return res.status(400).json({ message: 'Handle already taken' });
         }
-        storefront.handle = handle;
+        // Also check Storefront for consistency
+        const existingStorefront = await Storefront.findOne({ 
+          handle: normalizedHandle, 
+          _id: { $ne: storefront._id } 
+        });
+        if (existingStorefront) {
+          return res.status(400).json({ message: 'Handle already taken' });
+        }
+        storefront.handle = normalizedHandle;
+        
+        // Update ApprovedHandle collection if it exists
+        const approvedHandle = await ApprovedHandle.findOne({ storefrontId: storefront._id });
+        if (approvedHandle) {
+          approvedHandle.handle = normalizedHandle;
+          await approvedHandle.save();
+        }
       }
       if (displayName !== undefined && displayName !== null) storefront.displayName = displayName;
       if (description !== undefined) storefront.description = description;
