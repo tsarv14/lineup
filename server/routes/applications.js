@@ -41,25 +41,14 @@ router.post('/', [
     // Normalize handle
     const normalizedHandle = handle.toLowerCase().trim();
 
-    // Check if handle is already approved (in ApprovedHandle collection)
+    // Only check ApprovedHandle collection - this is the single source of truth for taken handles
     const existingApprovedHandle = await ApprovedHandle.findOne({ handle: normalizedHandle });
     if (existingApprovedHandle) {
       return res.status(400).json({ message: 'This handle is already taken' });
     }
 
-    // Check if handle is already in a pending application (excluding current user's application)
-    const existingApplicationQuery = {
-      handle: normalizedHandle,
-      status: 'pending'
-    };
-    // If user is logged in, exclude their own application
-    if (userId) {
-      existingApplicationQuery.user = { $ne: userId };
-    }
-    const existingApplication = await CreatorApplication.findOne(existingApplicationQuery);
-    if (existingApplication) {
-      return res.status(400).json({ message: 'This handle is already pending approval' });
-    }
+    // Note: We don't block based on pending applications - multiple users can submit applications
+    // with the same handle, and the admin will decide which one to approve
 
     // Check if user already has an application
     if (userId) {
@@ -105,26 +94,14 @@ router.get('/check-handle/:handle', async (req, res) => {
   try {
     const normalizedHandle = req.params.handle.toLowerCase().trim();
 
-    // Check if handle is already approved (in ApprovedHandle collection - single source of truth)
+    // Only check ApprovedHandle collection - this is the single source of truth for taken handles
     const existingApprovedHandle = await ApprovedHandle.findOne({ handle: normalizedHandle });
     if (existingApprovedHandle) {
       return res.json({ available: false, message: 'This handle is already taken' });
     }
 
-    // Check if handle is in a pending application (excluding current user's application if provided)
-    const query = {
-      handle: normalizedHandle,
-      status: 'pending'
-    };
-    const excludeApplicationId = req.query.excludeApplicationId;
-    if (excludeApplicationId) {
-      query._id = { $ne: excludeApplicationId };
-    }
-    const existingApplication = await CreatorApplication.findOne(query);
-    if (existingApplication) {
-      return res.json({ available: false, message: 'This handle is already pending approval' });
-    }
-
+    // Handle is available - we don't block based on pending applications
+    // Multiple users can submit applications with the same handle
     res.json({ available: true });
   } catch (error) {
     console.error('Check handle error:', error);
