@@ -32,6 +32,39 @@ const pickSchema = new mongoose.Schema({
   oddsAmerican: { type: Number, required: true }, // e.g., -110, +135
   oddsDecimal: { type: Number, required: true }, // Computed from American odds
   
+  // Parlay system: if betType is 'parlay', this contains the legs
+  isParlay: { type: Boolean, default: false },
+  parlayLegs: [{
+    // Each leg is a structured pick
+    sport: { type: String, required: true },
+    league: { type: String },
+    gameId: { type: String },
+    gameText: { type: String },
+    selection: { type: String, required: true }, // e.g., "Lakers -5.5"
+    betType: { 
+      type: String, 
+      enum: ['moneyline', 'spread', 'total', 'prop', 'other'],
+      required: true
+    },
+    oddsAmerican: { type: Number, required: true },
+    oddsDecimal: { type: Number, required: true },
+    gameStartTime: { type: Date, required: true },
+    // Leg result (set during grading)
+    result: { 
+      type: String, 
+      enum: ['pending', 'win', 'loss', 'push', 'void'], 
+      default: 'pending' 
+    },
+    // Reference to original pick if leg was created from existing pick
+    originalPickId: { type: mongoose.Schema.Types.ObjectId, ref: 'Pick' }
+  }],
+  // Parlay-specific fields
+  parlayResult: { 
+    type: String, 
+    enum: ['pending', 'win', 'loss', 'push', 'void'], 
+    default: 'pending' 
+  }, // Overall parlay result
+  
   // Unit system
   unitsRisked: { type: Number, required: true, min: 0 },
   amountRisked: { type: Number, required: true, min: 0 }, // USD in cents

@@ -68,7 +68,12 @@ async function gradePick(pick, game, closingLines) {
     profitUnits: profit.profitUnits,
     profitAmount: profit.profitAmount,
     clvScore,
-    isVerified: pick.isVerified
+    isVerified: pick.isVerified,
+    isParlay: pick.isParlay || false,
+    parlayLegs: pick.isParlay ? pick.parlayLegs.map(leg => ({
+      selection: leg.selection,
+      result: leg.result
+    })) : undefined
   };
 }
 
