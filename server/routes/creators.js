@@ -61,7 +61,21 @@ router.get('/:handle', async (req, res) => {
       return res.status(404).json({ message: 'Creator not found' });
     }
 
-    res.json(storefront);
+    // Phase C: Add transparency score
+    const storefrontObj = storefront.toObject();
+    if (storefront.owner) {
+      try {
+        const { getTransparencyScore } = require('../services/transparencyScore');
+        const transparencyData = await getTransparencyScore(storefront.owner._id);
+        storefrontObj.transparencyScore = transparencyData.score || 0;
+        storefrontObj.transparencyScoreBreakdown = transparencyData.breakdown || null;
+      } catch (err) {
+        console.log('Could not fetch transparency score:', err.message);
+        storefrontObj.transparencyScore = 0;
+      }
+    }
+
+    res.json(storefrontObj);
   } catch (error) {
     console.error('Get storefront error:', error);
     res.status(500).json({ message: 'Server error' });

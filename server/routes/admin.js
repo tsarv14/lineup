@@ -653,5 +653,69 @@ router.post('/flag', auth, adminAuth, async (req, res) => {
   }
 });
 
+// @route   GET /api/admin/disputes
+// @desc    Get all disputes (admin only)
+// @access  Private (admin)
+router.get('/disputes', auth, adminAuth, async (req, res) => {
+  try {
+    const { status } = req.query;
+    
+    let query = {};
+    if (status) {
+      query.status = status;
+    }
+    
+    const Dispute = require('../models/Dispute');
+    const disputes = await Dispute.find(query)
+      .populate('pick', 'selection betType oddsAmerican result status')
+      .populate('subscriber', 'username email')
+      .populate('creator', 'username email')
+      .populate('resolvedBy', 'username email')
+      .sort({ createdAt: -1 });
+    
+    res.json(disputes);
+  } catch (error) {
+    console.error('Get admin disputes error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   GET /api/admin/disputes/:id
+// @desc    Get dispute details with full context (admin only)
+// @access  Private (admin)
+router.get('/disputes/:id', auth, adminAuth, async (req, res) => {
+  try {
+    const Dispute = require('../models/Dispute');
+    const dispute = await Dispute.findById(req.params.id)
+      .populate('pick')
+      .populate('subscriber', 'username email')
+      .populate('creator', 'username email')
+      .populate('resolvedBy', 'username email');
+    
+    if (!dispute) {
+      return res.status(404).json({ message: 'Dispute not found' });
+    }
+    
+    // Get pick's audit history
+    const AuditLog = require('../models/AuditLog');
+    const auditLogs = await AuditLog.find({
+      resourceType: 'Pick',
+      resourceId: dispute.pick._id
+    }).sort({ createdAt: -1 });
+    
+    // Get pick's edit history
+    const editHistory = dispute.pick.editHistory || [];
+    
+    res.json({
+      dispute,
+      auditLogs,
+      editHistory
+    });
+  } catch (error) {
+    console.error('Get admin dispute error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;
 

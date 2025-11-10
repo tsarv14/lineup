@@ -426,6 +426,43 @@ router.post('/picks', async (req, res) => {
     const pick = new Pick(pickData);
     await pick.save();
 
+    // Phase C: Run fraud detection checks
+    try {
+      const { runFraudChecks, getCreatorStatsForFraud } = require('../services/antiFraud');
+      const creatorStats = await getCreatorStatsForFraud(req.user._id);
+      const recentPicks = await Pick.find({ creator: req.user._id })
+        .sort({ createdAt: -1 })
+        .limit(10);
+      const marketOdds = apiOddsAtPost?.lines || null;
+      
+      const fraudCheck = await runFraudChecks(pick, creatorStats, recentPicks, marketOdds);
+      
+      if (fraudCheck.shouldFlag) {
+        pick.flagged = true;
+        if (!pick.flags) pick.flags = [];
+        fraudCheck.flags.forEach(flag => {
+          pick.flags.push({
+            reason: flag.reason,
+            flaggedBy: null, // System flag
+            flaggedAt: new Date()
+          });
+        });
+        await pick.save();
+      }
+      
+      // Store fraud check results in metadata
+      if (!pick.metadata) pick.metadata = {};
+      pick.metadata.fraudCheck = {
+        fraudScore: fraudCheck.fraudScore,
+        shouldExcludeFromLeaderboards: fraudCheck.shouldExcludeFromLeaderboards,
+        checkedAt: new Date()
+      };
+      await pick.save();
+    } catch (fraudError) {
+      console.error('Fraud detection error (non-critical):', fraudError);
+      // Don't fail pick creation if fraud detection fails
+    }
+
     // Create audit log
     const AuditLog = require('../models/AuditLog');
     await AuditLog.create({

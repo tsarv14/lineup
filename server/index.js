@@ -22,6 +22,7 @@ require('./models/Event');
 require('./models/CreatorApplication');
 require('./models/ApprovedHandle');
 require('./models/Game'); // Phase B: Games from sports API
+require('./models/Dispute'); // Phase C: Disputes
 
 const app = express();
 
@@ -98,6 +99,8 @@ app.use('/api/applications', require('./routes/applications'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/games', require('./routes/games')); // Phase B: Games API
 app.use('/api/grading', require('./routes/grading')); // Phase B: Grading job endpoints
+app.use('/api/leaderboards', require('./routes/leaderboards')); // Phase C: Leaderboards
+app.use('/api/disputes', require('./routes/disputes')); // Phase C: Disputes
 
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
