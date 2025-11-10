@@ -20,6 +20,7 @@ require('./models/AuditLog');
 require('./models/Message');
 require('./models/Event');
 require('./models/CreatorApplication');
+require('./models/ApprovedHandle');
 
 const app = express();
 

@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 const CreatorApplication = require('../models/CreatorApplication');
 const Storefront = require('../models/Storefront');
 const User = require('../models/User');
+const ApprovedHandle = require('../models/ApprovedHandle');
 const auth = require('../middleware/auth');
 const adminAuth = require('../middleware/admin');
 
@@ -40,16 +41,16 @@ router.post('/', [
     // Normalize handle
     const normalizedHandle = handle.toLowerCase().trim();
 
-    // Check if handle is already taken in Storefront
-    const existingStorefront = await Storefront.findOne({ handle: normalizedHandle });
-    if (existingStorefront) {
+    // Check if handle is already approved (in ApprovedHandle collection)
+    const existingApprovedHandle = await ApprovedHandle.findOne({ handle: normalizedHandle });
+    if (existingApprovedHandle) {
       return res.status(400).json({ message: 'This handle is already taken' });
     }
 
-    // Check if handle is already in a pending or approved application (excluding current user's application)
+    // Check if handle is already in a pending application (excluding current user's application)
     const existingApplicationQuery = {
       handle: normalizedHandle,
-      status: { $in: ['pending', 'approved'] }
+      status: 'pending'
     };
     // If user is logged in, exclude their own application
     if (userId) {
@@ -57,7 +58,7 @@ router.post('/', [
     }
     const existingApplication = await CreatorApplication.findOne(existingApplicationQuery);
     if (existingApplication) {
-      return res.status(400).json({ message: 'This handle is already taken or pending approval' });
+      return res.status(400).json({ message: 'This handle is already pending approval' });
     }
 
     // Check if user already has an application
@@ -103,25 +104,25 @@ router.post('/', [
 router.get('/check-handle/:handle', async (req, res) => {
   try {
     const normalizedHandle = req.params.handle.toLowerCase().trim();
-    const excludeApplicationId = req.query.excludeApplicationId;
 
-    // Check Storefront
-    const existingStorefront = await Storefront.findOne({ handle: normalizedHandle });
-    if (existingStorefront) {
-      return res.json({ available: false, message: 'This handle is already taken by another creator' });
+    // Check if handle is already approved (in ApprovedHandle collection - single source of truth)
+    const existingApprovedHandle = await ApprovedHandle.findOne({ handle: normalizedHandle });
+    if (existingApprovedHandle) {
+      return res.json({ available: false, message: 'This handle is already taken' });
     }
 
-    // Check applications (excluding current application if provided)
+    // Check if handle is in a pending application (excluding current user's application if provided)
     const query = {
       handle: normalizedHandle,
-      status: { $in: ['pending', 'approved'] }
+      status: 'pending'
     };
+    const excludeApplicationId = req.query.excludeApplicationId;
     if (excludeApplicationId) {
       query._id = { $ne: excludeApplicationId };
     }
     const existingApplication = await CreatorApplication.findOne(query);
     if (existingApplication) {
-      return res.json({ available: false, message: 'This handle is already taken or pending approval' });
+      return res.json({ available: false, message: 'This handle is already pending approval' });
     }
 
     res.json({ available: true });
@@ -200,20 +201,20 @@ router.put('/:id/approve', auth, adminAuth, [
       return res.status(400).json({ message: 'Handle can only contain lowercase letters, numbers, and hyphens' });
     }
 
-    // Check if handle is available (excluding this application)
-    const existingStorefront = await Storefront.findOne({ handle: finalHandle });
-    if (existingStorefront) {
-      return res.status(400).json({ message: 'This handle is already taken by another creator' });
+    // Check if handle is already approved (in ApprovedHandle collection - single source of truth)
+    const existingApprovedHandle = await ApprovedHandle.findOne({ handle: finalHandle });
+    if (existingApprovedHandle) {
+      return res.status(400).json({ message: 'This handle is already taken' });
     }
 
-    // Check if handle is in another pending/approved application
+    // Check if handle is in another pending application
     const existingApplication = await CreatorApplication.findOne({
       handle: finalHandle,
-      status: { $in: ['pending', 'approved'] },
+      status: 'pending',
       _id: { $ne: application._id }
     });
     if (existingApplication) {
-      return res.status(400).json({ message: 'This handle is already taken or pending in another application' });
+      return res.status(400).json({ message: 'This handle is already pending in another application' });
     }
 
     // Update application with new handle if changed
@@ -249,6 +250,14 @@ router.put('/:id/approve', auth, adminAuth, [
           sports: application.sports || []
         });
         await storefront.save();
+
+        // Add handle to ApprovedHandle collection (single source of truth)
+        const approvedHandle = new ApprovedHandle({
+          handle: finalHandle,
+          storefrontId: storefront._id,
+          userId: user._id
+        });
+        await approvedHandle.save();
 
         // Link storefront to user
         user.storefront = storefront._id;
