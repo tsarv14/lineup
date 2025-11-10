@@ -33,6 +33,7 @@ interface Pick {
   isVerified?: boolean
   verificationSource?: 'manual' | 'system' | 'api'
   flagged?: boolean
+  writeUp?: string
 }
 
 export default function PicksPage() {
