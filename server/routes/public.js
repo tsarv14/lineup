@@ -8,8 +8,11 @@ const Pick = require('../models/Pick');
 const User = require('../models/User');
 const Storefront = require('../models/Storefront');
 const { apiAuth, checkPermission } = require('../middleware/apiAuth');
-const leaderboardRoutes = require('./leaderboards');
-const { getUnitsWonLeaderboard, getROILeaderboard, getTransparencyLeaderboard } = leaderboardRoutes;
+const { 
+  getUnitsWonLeaderboard, 
+  getROILeaderboard, 
+  getTransparencyLeaderboard 
+} = require('./leaderboards');
 
 const router = express.Router();
 
