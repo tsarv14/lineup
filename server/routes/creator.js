@@ -592,10 +592,10 @@ const updatePickHandler = async (req, res) => {
     console.error('Update pick error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
-});
+};
 
-router.put('/picks/:id', updatePickHandler)
-router.patch('/picks/:id', updatePickHandler)
+router.put('/picks/:id', updatePickHandler);
+router.patch('/picks/:id', updatePickHandler);
 
 // @route   GET /api/creator/stats
 // @desc    Get creator stats in units and USD (Phase A)
