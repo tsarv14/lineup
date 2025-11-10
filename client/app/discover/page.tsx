@@ -151,36 +151,118 @@ export default function Discover() {
                   )}
                   
                   {/* Stats Section - Always show, even if zero */}
-                  <div className="mb-4 p-4 bg-slate-900/50 rounded-lg border border-slate-700">
+                  <div className="mb-4 p-4 bg-gradient-to-br from-slate-900/80 to-slate-800/60 rounded-lg border border-slate-700/50 backdrop-blur-sm shadow-lg">
                     {creator.stats ? (
                       <>
-                        <div className="text-center mb-3">
-                          <p className="text-white font-semibold text-sm">
-                            ${(creator.stats.totalDollarsWon || (creator.stats.totalUnitsWon || 0) * 100 || 0) >= 0 ? '+' : ''}{(creator.stats.totalDollarsWon || (creator.stats.totalUnitsWon || 0) * 100 || 0).toFixed(2)} w/l | {(creator.stats.totalUnitsWon || 0) >= 0 ? '+' : ''}{(creator.stats.totalUnitsWon || 0).toFixed(2)} units w/l | {(creator.stats.roi || 0) >= 0 ? '+' : ''}{(creator.stats.roi || 0).toFixed(1)}% roi
-                          </p>
+                        <div className="space-y-3">
+                          {/* Dollar Amount */}
+                          <div className="flex items-center justify-between p-2.5 bg-black/30 rounded-lg border border-slate-700/50">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center border border-green-500/30">
+                                <svg className="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                              </div>
+                              <span className="text-gray-400 text-xs font-medium">$ w/l</span>
+                            </div>
+                            <span className={`font-bold text-sm ${(creator.stats.totalDollarsWon || (creator.stats.totalUnitsWon || 0) * 100 || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                              {(creator.stats.totalDollarsWon || (creator.stats.totalUnitsWon || 0) * 100 || 0) >= 0 ? '+' : ''}{(creator.stats.totalDollarsWon || (creator.stats.totalUnitsWon || 0) * 100 || 0).toFixed(2)}
+                            </span>
+                          </div>
+                          
+                          {/* Units */}
+                          <div className="flex items-center justify-between p-2.5 bg-black/30 rounded-lg border border-slate-700/50">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center border border-blue-500/30">
+                                <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                              </div>
+                              <span className="text-gray-400 text-xs font-medium">Units w/l</span>
+                            </div>
+                            <span className={`font-bold text-sm ${(creator.stats.totalUnitsWon || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                              {(creator.stats.totalUnitsWon || 0) >= 0 ? '+' : ''}{(creator.stats.totalUnitsWon || 0).toFixed(2)}
+                            </span>
+                          </div>
+                          
+                          {/* ROI */}
+                          <div className="flex items-center justify-between p-2.5 bg-black/30 rounded-lg border border-slate-700/50">
+                            <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center border border-purple-500/30">
+                                <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                </svg>
+                              </div>
+                              <span className="text-gray-400 text-xs font-medium">ROI</span>
+                            </div>
+                            <span className={`font-bold text-sm ${(creator.stats.roi || 0) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                              {(creator.stats.roi || 0) >= 0 ? '+' : ''}{(creator.stats.roi || 0).toFixed(1)}%
+                            </span>
+                          </div>
                         </div>
+                        
                         {creator.stats.transparencyScore > 0 && (
-                          <div className="mt-3 pt-3 border-t border-slate-700">
+                          <div className="mt-4 pt-4 border-t border-slate-700/50">
                             <div className="flex items-center justify-between">
-                              <p className="text-gray-400 text-xs">Transparency Score</p>
                               <div className="flex items-center gap-2">
-                                <div className="w-16 h-2 bg-slate-700 rounded-full overflow-hidden">
+                                <svg className="w-4 h-4 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                </svg>
+                                <p className="text-gray-400 text-xs font-medium">Transparency</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <div className="w-20 h-2 bg-slate-700/50 rounded-full overflow-hidden border border-slate-600/50">
                                   <div 
-                                    className="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all"
+                                    className="h-full bg-gradient-to-r from-primary-500 via-primary-600 to-primary-500 transition-all shadow-glow shadow-primary-500/30"
                                     style={{ width: `${creator.stats.transparencyScore}%` }}
                                   />
                                 </div>
-                                <p className="text-white text-xs font-semibold">{creator.stats.transparencyScore.toFixed(1)}</p>
+                                <p className="text-white text-xs font-bold min-w-[2.5rem] text-right">{creator.stats.transparencyScore.toFixed(1)}</p>
                               </div>
                             </div>
                           </div>
                         )}
                       </>
                     ) : (
-                      <div className="text-center">
-                        <p className="text-white font-semibold text-sm">
-                          $0.00 w/l | 0.00 units w/l | 0.0% roi
-                        </p>
+                      <div className="space-y-3">
+                        {/* Dollar Amount - Zero */}
+                        <div className="flex items-center justify-between p-2.5 bg-black/30 rounded-lg border border-slate-700/50 opacity-60">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-slate-700/30 flex items-center justify-center border border-slate-600/30">
+                              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                            <span className="text-gray-500 text-xs font-medium">$ w/l</span>
+                          </div>
+                          <span className="font-bold text-sm text-gray-500">$0.00</span>
+                        </div>
+                        
+                        {/* Units - Zero */}
+                        <div className="flex items-center justify-between p-2.5 bg-black/30 rounded-lg border border-slate-700/50 opacity-60">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-slate-700/30 flex items-center justify-center border border-slate-600/30">
+                              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                              </svg>
+                            </div>
+                            <span className="text-gray-500 text-xs font-medium">Units w/l</span>
+                          </div>
+                          <span className="font-bold text-sm text-gray-500">0.00</span>
+                        </div>
+                        
+                        {/* ROI - Zero */}
+                        <div className="flex items-center justify-between p-2.5 bg-black/30 rounded-lg border border-slate-700/50 opacity-60">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-slate-700/30 flex items-center justify-center border border-slate-600/30">
+                              <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                              </svg>
+                            </div>
+                            <span className="text-gray-500 text-xs font-medium">ROI</span>
+                          </div>
+                          <span className="font-bold text-sm text-gray-500">0.0%</span>
+                        </div>
                       </div>
                     )}
                   </div>
