@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import api from '@/lib/api'
+import toast from 'react-hot-toast'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -30,6 +31,7 @@ export default function AdminCreatorsPage() {
   const { user, loading: authLoading, checkAuth } = useAuth()
   const [loading, setLoading] = useState(true)
   const [creators, setCreators] = useState<Creator[]>([])
+  const [fixing, setFixing] = useState<string | null>(null)
 
   useEffect(() => {
     if (!authLoading) {
@@ -61,6 +63,20 @@ export default function AdminCreatorsPage() {
       console.error('Error fetching creators:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fixCreator = async (handle: string) => {
+    setFixing(handle)
+    try {
+      await api.post(`/admin/fix-creator/${handle}`)
+      toast.success('Creator fixed successfully!')
+      await fetchCreators()
+    } catch (error: any) {
+      console.error('Error fixing creator:', error)
+      toast.error(error.response?.data?.message || 'Failed to fix creator')
+    } finally {
+      setFixing(null)
     }
   }
 
@@ -176,6 +192,14 @@ export default function AdminCreatorsPage() {
                       </svg>
                       View Page
                     </Link>
+                    <button
+                      onClick={() => fixCreator(creator.storefront!.handle)}
+                      disabled={fixing === creator.storefront.handle}
+                      className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Fix creator role and storefront link"
+                    >
+                      {fixing === creator.storefront.handle ? 'Fixing...' : 'Fix'}
+                    </button>
                   </div>
                 )}
               </div>
