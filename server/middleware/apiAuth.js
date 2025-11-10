@@ -33,9 +33,6 @@ const apiAuth = async (req, res, next) => {
     // Attach key info to request
     req.apiKey = keyDoc;
     
-    // Check rate limits (simplified - could use Redis for production)
-    // For now, just pass through - rate limiting can be added later
-    
     next();
   } catch (error) {
     console.error('API auth error:', error);

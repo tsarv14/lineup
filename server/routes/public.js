@@ -15,9 +15,12 @@ const {
 } = require('./leaderboards');
 
 const router = express.Router();
+const rateLimiter = require('../middleware/rateLimiter');
 
 // All routes require API key authentication
 router.use(apiAuth);
+// Apply rate limiting
+router.use(rateLimiter);
 
 // @route   GET /api/public/picks
 // @desc    Get verified picks (public API)

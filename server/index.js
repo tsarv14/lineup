@@ -159,6 +159,18 @@ const startServer = (port) => {
           runGradingJob().catch(err => console.error('Scheduled grading job error:', err));
         }, 10 * 60 * 1000); // 10 minutes
       }
+      
+      // Phase A: Start stats computation scheduler (runs every hour)
+      if (process.env.ENABLE_STATS_SCHEDULER === 'true') {
+        const { runStatsComputationJob } = require('./jobs/statsComputation');
+        console.log('📈 Stats computation scheduler enabled');
+        
+        // Schedule periodic runs (every hour)
+        setInterval(() => {
+          console.log('🔄 Running scheduled stats computation job...');
+          runStatsComputationJob().catch(err => console.error('Scheduled stats computation error:', err));
+        }, 60 * 60 * 1000); // 1 hour
+      }
     });
 
     server.on('error', (err) => {

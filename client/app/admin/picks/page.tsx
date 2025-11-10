@@ -55,6 +55,7 @@ export default function AdminPicksPage() {
   const [showEditModal, setShowEditModal] = useState(false)
   const [editReason, setEditReason] = useState('')
   const [editing, setEditing] = useState(false)
+  const [editFormData, setEditFormData] = useState<any>({})
 
   useEffect(() => {
     if (!authLoading) {
@@ -104,7 +105,9 @@ export default function AdminPicksPage() {
     }
   }
 
-  const handleEdit = async (pick: Pick) => {
+  const handleEdit = async () => {
+    if (!selectedPick) return
+    
     if (!editReason.trim()) {
       toast.error('Please provide a reason for editing')
       return
@@ -112,10 +115,17 @@ export default function AdminPicksPage() {
 
     setEditing(true)
     try {
-      // For now, just show a message - full edit functionality can be added later
-      toast.success('Edit functionality coming soon. Use the Edit button on the creator page.')
+      const payload = {
+        ...editFormData,
+        reason: editReason
+      }
+      
+      await api.put(`/creator/picks/${selectedPick._id}`, payload)
+      toast.success('Pick updated successfully')
       setShowEditModal(false)
       setEditReason('')
+      setEditFormData({})
+      fetchPicks()
     } catch (error: any) {
       console.error('Edit pick error:', error)
       toast.error(error.response?.data?.message || 'Failed to edit pick')
@@ -288,6 +298,16 @@ export default function AdminPicksPage() {
                       <button
                         onClick={() => {
                           setSelectedPick(pick)
+                          setEditFormData({
+                            selection: pick.selection,
+                            oddsAmerican: pick.oddsAmerican,
+                            unitsRisked: pick.unitsRisked,
+                            betType: pick.betType,
+                            sport: pick.sport,
+                            league: pick.league,
+                            gameText: pick.gameText || '',
+                            writeUp: pick.writeUp || ''
+                          })
                           setShowEditModal(true)
                         }}
                         className="px-4 py-2 bg-yellow-600/20 text-yellow-400 rounded-lg hover:bg-yellow-600/30 transition-all border border-yellow-500/30 hover:border-yellow-500/50 flex items-center gap-2 text-sm font-medium"
@@ -321,13 +341,85 @@ export default function AdminPicksPage() {
 
         {/* Edit Modal */}
         {showEditModal && selectedPick && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-            <div className="bg-slate-900 rounded-lg border border-slate-800 max-w-md w-full p-6">
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-slate-900 rounded-lg border border-slate-800 max-w-2xl w-full p-6 my-8">
               <h3 className="text-xl font-semibold text-white mb-4">Edit Locked Pick</h3>
-              <p className="text-gray-400 text-sm mb-4">
+              <p className="text-gray-400 text-sm mb-6">
                 This pick is locked. Admin edits require a reason and will be logged in the audit trail.
               </p>
-              <div className="mb-4">
+              
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Selection *
+                  </label>
+                  <input
+                    type="text"
+                    value={editFormData.selection || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, selection: e.target.value })}
+                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Odds (American) *
+                    </label>
+                    <input
+                      type="number"
+                      value={editFormData.oddsAmerican || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, oddsAmerican: parseInt(e.target.value) })}
+                      className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Units Risked *
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={editFormData.unitsRisked || ''}
+                      onChange={(e) => setEditFormData({ ...editFormData, unitsRisked: parseFloat(e.target.value) })}
+                      className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Bet Type *
+                  </label>
+                  <select
+                    value={editFormData.betType || 'moneyline'}
+                    onChange={(e) => setEditFormData({ ...editFormData, betType: e.target.value })}
+                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="moneyline">Moneyline</option>
+                    <option value="spread">Spread</option>
+                    <option value="total">Total</option>
+                    <option value="prop">Prop</option>
+                    <option value="parlay">Parlay</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Write-up
+                  </label>
+                  <textarea
+                    value={editFormData.writeUp || ''}
+                    onChange={(e) => setEditFormData({ ...editFormData, writeUp: e.target.value })}
+                    rows={4}
+                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+              
+              <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   Reason for Edit *
                 </label>
@@ -339,18 +431,20 @@ export default function AdminPicksPage() {
                   placeholder="Explain why this pick needs to be edited..."
                 />
               </div>
+              
               <div className="flex gap-3">
                 <button
-                  onClick={() => handleEdit(selectedPick)}
-                  disabled={editing || !editReason.trim()}
+                  onClick={handleEdit}
+                  disabled={editing || !editReason.trim() || !editFormData.selection || !editFormData.oddsAmerican || !editFormData.unitsRisked}
                   className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {editing ? 'Editing...' : 'Edit Pick'}
+                  {editing ? 'Editing...' : 'Save Changes'}
                 </button>
                 <button
                   onClick={() => {
                     setShowEditModal(false)
                     setEditReason('')
+                    setEditFormData({})
                     setSelectedPick(null)
                   }}
                   className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-colors"

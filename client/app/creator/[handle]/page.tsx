@@ -55,6 +55,17 @@ interface Pick {
   oneOffPriceCents?: number
   createdAt: string
   eventDate?: string
+  // Phase A/B fields
+  selection?: string
+  betType?: string
+  oddsAmerican?: number
+  unitsRisked?: number
+  amountRisked?: number
+  result?: 'pending' | 'win' | 'loss' | 'push' | 'void'
+  status?: 'pending' | 'locked' | 'graded' | 'disputed'
+  isVerified?: boolean
+  verificationSource?: 'manual' | 'system' | 'api'
+  gameStartTime?: string
 }
 
 export default function CreatorStorefront() {
