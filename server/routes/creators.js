@@ -82,6 +82,66 @@ router.get('/:handle', async (req, res) => {
   }
 });
 
+// @route   GET /api/creators/:handle/stats
+// @desc    Get creator's public stats (win rate, ROI, transparency score)
+// @access  Public
+router.get('/:handle/stats', async (req, res) => {
+  try {
+    const normalizedHandle = req.params.handle.toLowerCase().trim();
+    const storefront = await Storefront.findOne({ handle: normalizedHandle });
+    
+    if (!storefront) {
+      return res.status(404).json({ message: 'Creator not found' });
+    }
+    
+    const picks = await Pick.find({ 
+      creator: storefront.owner,
+      isVerified: true,
+      status: 'graded'
+    });
+    
+    const stats = {
+      totalPicks: picks.length,
+      wins: picks.filter(p => p.result === 'win').length,
+      losses: picks.filter(p => p.result === 'loss').length,
+      pushes: picks.filter(p => p.result === 'push').length,
+      totalUnitsRisked: picks.reduce((sum, p) => sum + (p.unitsRisked || 0), 0),
+      totalUnitsWon: picks.reduce((sum, p) => sum + (p.profitUnits || 0), 0)
+    };
+    
+    const winRate = (stats.wins + stats.losses) > 0 
+      ? (stats.wins / (stats.wins + stats.losses)) * 100 
+      : 0;
+    
+    const roi = stats.totalUnitsRisked > 0
+      ? (stats.totalUnitsWon / stats.totalUnitsRisked) * 100
+      : 0;
+    
+    // Get transparency score
+    let transparencyScore = 0;
+    try {
+      const { getTransparencyScore } = require('../services/transparencyScore');
+      const transparencyData = await getTransparencyScore(storefront.owner);
+      transparencyScore = transparencyData.score || 0;
+    } catch (err) {
+      console.log('Could not fetch transparency score:', err.message);
+    }
+    
+    res.json({
+      winRate: Math.round(winRate * 100) / 100,
+      roi: Math.round(roi * 100) / 100,
+      totalPicks: stats.totalPicks,
+      wins: stats.wins,
+      losses: stats.losses,
+      totalUnitsWon: Math.round(stats.totalUnitsWon * 100) / 100,
+      transparencyScore: Math.round(transparencyScore * 10) / 10
+    });
+  } catch (error) {
+    console.error('Get creator stats error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // @route   GET /api/creators/:handle/plans
 // @desc    Get creator's plans (public)
 // @access  Public
