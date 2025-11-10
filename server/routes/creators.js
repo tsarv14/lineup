@@ -5,6 +5,7 @@ const Pick = require('../models/Pick');
 const User = require('../models/User');
 const Subscription = require('../models/Subscription');
 const auth = require('../middleware/auth');
+const adminAuth = require('../middleware/admin');
 
 const router = express.Router();
 
