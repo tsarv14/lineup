@@ -29,6 +29,7 @@ export default function StorePage() {
   const [storefront, setStorefront] = useState<any>(null)
   const [editingSection, setEditingSection] = useState<string | null>(null)
   const [uploading, setUploading] = useState<string | null>(null)
+  const [editingCreatorId, setEditingCreatorId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     handle: '',
     displayName: '',
@@ -48,9 +49,17 @@ export default function StorePage() {
   })
 
   useEffect(() => {
+    // Check if admin is editing another creator
+    const creatorId = sessionStorage.getItem('editingCreatorId')
+    if (creatorId && user?.roles?.includes('admin')) {
+      setEditingCreatorId(creatorId)
+    }
+  }, [user])
+
+  useEffect(() => {
     fetchStorefront()
     fetchPlans()
-  }, [])
+  }, [editingCreatorId, user])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -69,26 +78,57 @@ export default function StorePage() {
 
   const fetchStorefront = async () => {
     try {
-      const response = await api.get('/creator/storefront')
-      if (response.data) {
-        setStorefront(response.data)
-        setFormData({
-          handle: response.data.handle || '',
-          displayName: response.data.displayName || '',
-          description: response.data.description || '',
-          logoImage: response.data.logoImage || '',
-          bannerImage: response.data.bannerImage || '',
-          aboutText: response.data.aboutText || '',
-          aboutImage: response.data.aboutImage || '',
-          sports: response.data.sports || [],
-          socialLinks: {
-            twitter: response.data.socialLinks?.twitter || '',
-            instagram: response.data.socialLinks?.instagram || '',
-            website: response.data.socialLinks?.website || '',
-            tiktok: response.data.socialLinks?.tiktok || '',
-            youtube: response.data.socialLinks?.youtube || ''
+      // If admin is editing another creator, fetch that creator's storefront
+      if (editingCreatorId && user?.roles?.includes('admin')) {
+        // Get creator's storefront via admin API
+        const creatorsResponse = await api.get('/creators')
+        const creator = creatorsResponse.data.find((c: any) => c._id === editingCreatorId)
+        if (creator?.storefront) {
+          const storefrontResponse = await api.get(`/creators/${creator.storefront.handle}`)
+          if (storefrontResponse.data) {
+            setStorefront(storefrontResponse.data)
+            setFormData({
+              handle: storefrontResponse.data.handle || '',
+              displayName: storefrontResponse.data.displayName || '',
+              description: storefrontResponse.data.description || '',
+              logoImage: storefrontResponse.data.logoImage || '',
+              bannerImage: storefrontResponse.data.bannerImage || '',
+              aboutText: storefrontResponse.data.aboutText || '',
+              aboutImage: storefrontResponse.data.aboutImage || '',
+              sports: storefrontResponse.data.sports || [],
+              socialLinks: {
+                twitter: storefrontResponse.data.socialLinks?.twitter || '',
+                instagram: storefrontResponse.data.socialLinks?.instagram || '',
+                website: storefrontResponse.data.socialLinks?.website || '',
+                tiktok: storefrontResponse.data.socialLinks?.tiktok || '',
+                youtube: storefrontResponse.data.socialLinks?.youtube || ''
+              }
+            })
           }
-        })
+        }
+      } else {
+        // Normal creator fetching their own storefront
+        const response = await api.get('/creator/storefront')
+        if (response.data) {
+          setStorefront(response.data)
+          setFormData({
+            handle: response.data.handle || '',
+            displayName: response.data.displayName || '',
+            description: response.data.description || '',
+            logoImage: response.data.logoImage || '',
+            bannerImage: response.data.bannerImage || '',
+            aboutText: response.data.aboutText || '',
+            aboutImage: response.data.aboutImage || '',
+            sports: response.data.sports || [],
+            socialLinks: {
+              twitter: response.data.socialLinks?.twitter || '',
+              instagram: response.data.socialLinks?.instagram || '',
+              website: response.data.socialLinks?.website || '',
+              tiktok: response.data.socialLinks?.tiktok || '',
+              youtube: response.data.socialLinks?.youtube || ''
+            }
+          })
+        }
       }
     } catch (error: any) {
       if (error.response?.status === 404) {
@@ -116,13 +156,29 @@ export default function StorePage() {
 
   const handleSave = async (section?: string) => {
     try {
-      const response = await api.put('/creator/storefront', formData)
-      setStorefront(response.data)
-      if (section) {
-        setEditingSection(null)
+      // If admin is editing another creator, use admin endpoint
+      if (editingCreatorId && user?.roles?.includes('admin')) {
+        const creatorsResponse = await api.get('/creators')
+        const creator = creatorsResponse.data.find((c: any) => c._id === editingCreatorId)
+        if (creator?.storefront?.handle) {
+          const response = await api.put(`/admin/storefront/${creator.storefront.handle}`, formData)
+          setStorefront(response.data)
+          if (section) {
+            setEditingSection(null)
+          }
+          toast.success(section ? `${section.charAt(0).toUpperCase() + section.slice(1)} updated successfully!` : 'Storefront updated successfully!')
+          await fetchStorefront()
+        }
+      } else {
+        // Normal creator updating their own storefront
+        const response = await api.put('/creator/storefront', formData)
+        setStorefront(response.data)
+        if (section) {
+          setEditingSection(null)
+        }
+        toast.success(section ? `${section.charAt(0).toUpperCase() + section.slice(1)} updated successfully!` : 'Storefront updated successfully!')
+        await fetchStorefront()
       }
-      toast.success(section ? `${section.charAt(0).toUpperCase() + section.slice(1)} updated successfully!` : 'Storefront updated successfully!')
-      await fetchStorefront()
     } catch (error: any) {
       console.error('Save error:', error)
       // Only show error if it's a real network/server error, not validation

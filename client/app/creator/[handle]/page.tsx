@@ -283,14 +283,20 @@ export default function CreatorStorefront() {
             </Link>
           </div>
           
-          <div className="space-y-4 mb-6">
-            <p className="text-white text-lg font-semibold">
-              {storefront.description || 'The best picks from the best experts'}
-            </p>
-            <p className="text-gray-400 text-base">
-              {storefront.aboutText || 'Where sports bettors become winners. Let\'s win more together. Subscribe today!'}
-            </p>
-          </div>
+          {storefront.description && (
+            <div className="mb-6">
+              <p className="text-white text-lg font-semibold">
+                {storefront.description}
+              </p>
+            </div>
+          )}
+          {storefront.aboutText && (
+            <div className="mb-6">
+              <p className="text-gray-400 text-base">
+                {storefront.aboutText}
+              </p>
+            </div>
+          )}
 
           <div className="flex items-center gap-4 flex-wrap">
             {plans.length > 0 && (
@@ -472,7 +478,7 @@ export default function CreatorStorefront() {
             <div>
               <p className="text-white text-3xl font-bold mb-6">About Us</p>
               <p className="text-gray-400 text-base leading-relaxed">
-                {storefront.aboutText || `${storefront.displayName} uses advanced sports analytics to deliver data-driven picks that win. Our experts analyze player stats, trends, and market shifts to uncover true value plays. We don't guess - we calculate. Get smarter, more confident picks and turn data into profit. ${storefront.displayName}: Where every play brings you closer to victory.`}
+                {storefront.aboutText || ''}
               </p>
             </div>
             <div className="relative w-full h-96 rounded-lg overflow-hidden">
