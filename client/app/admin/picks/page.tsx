@@ -19,12 +19,15 @@ interface Pick {
     displayName: string
   }
   sport: string
+  league?: string
+  gameText?: string
   selection: string
   betType: string
   oddsAmerican: number
   unitsRisked: number
   amountRisked: number
   gameStartTime: string
+  writeUp?: string
   createdAt: string
   status: 'pending' | 'locked' | 'graded' | 'disputed'
   result: 'pending' | 'win' | 'loss' | 'push' | 'void'
