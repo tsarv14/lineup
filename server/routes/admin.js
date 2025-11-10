@@ -7,6 +7,22 @@ const adminAuth = require('../middleware/admin');
 
 const router = express.Router();
 
+// @route   GET /api/admin/storefronts
+// @desc    Get all storefronts (including those without creator role)
+// @access  Private (admin)
+router.get('/storefronts', auth, adminAuth, async (req, res) => {
+  try {
+    const storefronts = await Storefront.find()
+      .populate('owner', 'email username firstName lastName roles')
+      .sort({ createdAt: -1 });
+    
+    res.json(storefronts);
+  } catch (error) {
+    console.error('Get storefronts error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // @route   POST /api/admin/fix-creator/:handle
 // @desc    Fix a specific creator by handle (add role, link storefront)
 // @access  Private (admin)
