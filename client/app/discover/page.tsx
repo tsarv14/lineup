@@ -34,11 +34,11 @@ export default function Discover() {
   const fetchCreators = async () => {
     try {
       const response = await api.get('/creators')
-      // Filter to only show creators with storefronts
-      const creatorsWithStorefronts = (response.data || []).filter((creator: Creator) => creator.storefront)
-      setCreators(creatorsWithStorefronts)
+      // All creators returned should have storefronts (API now returns storefronts directly)
+      setCreators(response.data || [])
     } catch (error) {
       console.error('Error fetching creators:', error)
+      setCreators([])
     } finally {
       setLoading(false)
     }

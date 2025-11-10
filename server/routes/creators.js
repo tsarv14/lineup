@@ -10,14 +10,34 @@ const adminAuth = require('../middleware/admin');
 const router = express.Router();
 
 // @route   GET /api/creators
-// @desc    Get all creators (public)
+// @desc    Get all creators (public) - returns storefronts with owner info
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    const creators = await User.find({ roles: { $in: ['creator'] } })
-      .select('-password')
-      .populate('storefront')
+    // Fetch all storefronts directly (they are the source of truth)
+    const storefronts = await Storefront.find()
+      .populate('owner', 'email username firstName lastName avatar')
       .sort({ createdAt: -1 });
+
+    // Transform to creator format for frontend compatibility
+    const creators = storefronts.map(storefront => ({
+      _id: storefront.owner?._id || storefront._id,
+      email: storefront.owner?.email || '',
+      firstName: storefront.owner?.firstName,
+      lastName: storefront.owner?.lastName,
+      username: storefront.owner?.username || '',
+      avatar: storefront.owner?.avatar,
+      storefront: {
+        _id: storefront._id,
+        handle: storefront.handle,
+        displayName: storefront.displayName,
+        description: storefront.description,
+        logoImage: storefront.logoImage,
+        bannerImage: storefront.bannerImage,
+        createdAt: storefront.createdAt
+      },
+      createdAt: storefront.createdAt
+    }));
 
     res.json(creators);
   } catch (error) {

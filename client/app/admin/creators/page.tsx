@@ -57,54 +57,12 @@ export default function AdminCreatorsPage() {
   const fetchCreators = async () => {
     setLoading(true)
     try {
-      // First try to get creators with creator role
-      const creatorsResponse = await api.get('/creators')
-      const creatorsWithRole = creatorsResponse.data || []
-      
-      // Also get all storefronts to find ones without creator role
-      try {
-        const storefrontsResponse = await api.get('/admin/storefronts')
-        const allStorefronts = storefrontsResponse.data || []
-        
-        // Find storefronts whose owners don't have creator role
-        const storefrontsWithoutRole = allStorefronts.filter((sf: any) => {
-          if (!sf.owner) return false
-          const hasCreatorRole = sf.owner.roles && Array.isArray(sf.owner.roles) && sf.owner.roles.includes('creator')
-          return !hasCreatorRole
-        })
-        
-        // Combine both lists, avoiding duplicates
-        const allCreators = [...creatorsWithRole]
-        storefrontsWithoutRole.forEach((sf: any) => {
-          if (!allCreators.find((c: Creator) => c._id === sf.owner._id)) {
-            allCreators.push({
-              _id: sf.owner._id,
-              email: sf.owner.email,
-              firstName: sf.owner.firstName,
-              lastName: sf.owner.lastName,
-              username: sf.owner.username,
-              storefront: {
-                _id: sf._id,
-                handle: sf.handle,
-                displayName: sf.displayName,
-                description: sf.description,
-                logoImage: sf.logoImage,
-                bannerImage: sf.bannerImage,
-                createdAt: sf.createdAt
-              },
-              createdAt: sf.createdAt
-            })
-          }
-        })
-        
-        setCreators(allCreators)
-      } catch (error) {
-        // If admin endpoint fails, just use creators
-        console.error('Error fetching storefronts:', error)
-        setCreators(creatorsWithRole)
-      }
+      // Fetch creators (now returns all storefronts directly)
+      const response = await api.get('/creators')
+      setCreators(response.data || [])
     } catch (error) {
       console.error('Error fetching creators:', error)
+      setCreators([])
     } finally {
       setLoading(false)
     }
