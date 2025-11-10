@@ -23,6 +23,8 @@ require('./models/CreatorApplication');
 require('./models/ApprovedHandle');
 require('./models/Game'); // Phase B: Games from sports API
 require('./models/Dispute'); // Phase C: Disputes
+require('./models/LedgerEntry'); // Phase D: Immutable ledger
+require('./models/ApiKey'); // Phase D: API keys for public API
 
 const app = express();
 
@@ -101,6 +103,8 @@ app.use('/api/games', require('./routes/games')); // Phase B: Games API
 app.use('/api/grading', require('./routes/grading')); // Phase B: Grading job endpoints
 app.use('/api/leaderboards', require('./routes/leaderboards')); // Phase C: Leaderboards
 app.use('/api/disputes', require('./routes/disputes')); // Phase C: Disputes
+app.use('/api/public', require('./routes/public')); // Phase D: Public read-only API
+app.use('/api/api-keys', require('./routes/api-keys')); // Phase D: API key management
 
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

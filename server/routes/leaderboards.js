@@ -192,5 +192,11 @@ router.get('/:type', async (req, res) => {
   }
 });
 
-module.exports = router;
+// Export functions for use in public API
+module.exports = {
+  router,
+  getUnitsWonLeaderboard,
+  getROILeaderboard,
+  getTransparencyLeaderboard
+};
 

@@ -54,6 +54,14 @@ async function gradePick(pick, game, closingLines) {
   
   await pick.save();
   
+  // Phase D: Create ledger entry for grading
+  try {
+    const LedgerEntry = require('../models/LedgerEntry');
+    await LedgerEntry.createEntry(pick, 'grade');
+  } catch (ledgerError) {
+    console.error('Ledger entry creation error (non-critical):', ledgerError);
+  }
+  
   return {
     pickId: pick._id,
     result: result.result,

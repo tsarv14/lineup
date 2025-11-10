@@ -426,6 +426,15 @@ router.post('/picks', async (req, res) => {
     const pick = new Pick(pickData);
     await pick.save();
 
+    // Phase D: Create immutable ledger entry
+    try {
+      const LedgerEntry = require('../models/LedgerEntry');
+      await LedgerEntry.createEntry(pick, 'create');
+    } catch (ledgerError) {
+      console.error('Ledger entry creation error (non-critical):', ledgerError);
+      // Don't fail pick creation if ledger fails
+    }
+
     // Phase C: Run fraud detection checks
     try {
       const { runFraudChecks, getCreatorStatsForFraud } = require('../services/antiFraud');
@@ -631,6 +640,14 @@ const updatePickHandler = async (req, res) => {
     pick.updatedAt = new Date();
 
     await pick.save();
+
+    // Phase D: Create ledger entry for edit
+    try {
+      const LedgerEntry = require('../models/LedgerEntry');
+      await LedgerEntry.createEntry(pick, 'edit');
+    } catch (ledgerError) {
+      console.error('Ledger entry creation error (non-critical):', ledgerError);
+    }
 
     // Create audit log
     const AuditLog = require('../models/AuditLog');
