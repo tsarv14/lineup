@@ -94,6 +94,7 @@ app.use('/api/upload', require('./routes/upload'));
 app.use('/api/stripe', require('./routes/stripe'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/applications', require('./routes/applications'));
+app.use('/api/admin', require('./routes/admin'));
 
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
