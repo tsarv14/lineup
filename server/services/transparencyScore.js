@@ -44,12 +44,13 @@ async function calculateTransparencyScore(creatorId) {
   const verifiedRateScore = verifiedRate * 0.4;
   
   // 2. Win Consistency (25% weight)
+  // Include parlays: they have result at top level (parlayResult or result)
   const gradedPicks = picks.filter(p => p.status === 'graded');
   if (gradedPicks.length === 0) {
     var winConsistencyScore = 0;
   } else {
-    const wins = gradedPicks.filter(p => p.result === 'win').length;
-    const losses = gradedPicks.filter(p => p.result === 'loss').length;
+    const wins = gradedPicks.filter(p => p.result === 'win' || (p.isParlay && p.parlayResult === 'win')).length;
+    const losses = gradedPicks.filter(p => p.result === 'loss' || (p.isParlay && p.parlayResult === 'loss')).length;
     const totalGraded = wins + losses;
     
     if (totalGraded === 0) {
