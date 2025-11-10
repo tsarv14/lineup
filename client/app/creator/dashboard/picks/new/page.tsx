@@ -124,6 +124,8 @@ export default function NewPickPage() {
   const [fetchingUnitValue, setFetchingUnitValue] = useState(true)
   const [plans, setPlans] = useState<Plan[]>([])
   const [unitValueDefault, setUnitValueDefault] = useState<number>(100)
+  const [showGameSearch, setShowGameSearch] = useState(false)
+  const [selectedGame, setSelectedGame] = useState<Game | null>(null)
   const [formData, setFormData] = useState({
     // Phase A structured fields
     sport: '',
