@@ -222,11 +222,17 @@ router.put('/:id/approve', auth, adminAuth, [
     if (application.user) {
       const user = await User.findById(application.user);
       if (user) {
+        // Initialize roles array if it doesn't exist
+        if (!user.roles || !Array.isArray(user.roles)) {
+          user.roles = ['subscriber'];
+        }
+        
         // Add creator role if not already present
         if (!user.roles.includes('creator')) {
           user.roles.push('creator');
-          await user.save();
         }
+        
+        await user.save();
 
         // Create storefront with the final handle
         const storefront = new Storefront({
