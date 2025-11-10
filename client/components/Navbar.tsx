@@ -40,6 +40,12 @@ export default function Navbar() {
                 Discover
               </Link>
               <Link
+                href="/leaderboards"
+                className="px-3 sm:px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-black/40 transition-all text-sm sm:text-base border border-transparent hover:border-slate-700"
+              >
+                Leaderboards
+              </Link>
+              <Link
                 href="/login"
                 className="px-3 sm:px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-black/40 transition-all text-sm sm:text-base border border-transparent hover:border-slate-700"
               >
@@ -89,6 +95,16 @@ export default function Navbar() {
               }`}
             >
               Discover
+            </Link>
+            <Link
+              href="/leaderboards"
+              className={`px-4 py-2 rounded-lg transition-all ${
+                pathname === '/leaderboards' 
+                  ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-glow shadow-primary-500/30' 
+                  : 'text-gray-300 hover:text-white hover:bg-black/40 border border-transparent hover:border-slate-700'
+              }`}
+            >
+              Leaderboards
             </Link>
             <Link
               href="/my-subscriptions"

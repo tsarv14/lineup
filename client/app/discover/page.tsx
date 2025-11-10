@@ -21,6 +21,15 @@ interface Creator {
     logoImage?: string
     bannerImage?: string
   }
+  stats?: {
+    winRate: number
+    roi: number
+    totalPicks: number
+    wins: number
+    losses: number
+    totalUnitsWon: number
+    transparencyScore: number
+  }
 }
 
 export default function Discover() {
@@ -35,7 +44,25 @@ export default function Discover() {
     try {
       const response = await api.get('/creators')
       // All creators returned should have storefronts (API now returns storefronts directly)
-      setCreators(response.data || [])
+      const creatorsData = response.data || []
+      
+      // Fetch stats for each creator
+      const creatorsWithStats = await Promise.all(
+        creatorsData.map(async (creator: Creator) => {
+          if (creator.storefront?.handle) {
+            try {
+              const statsResponse = await api.get(`/creators/${creator.storefront.handle}/stats`)
+              return { ...creator, stats: statsResponse.data }
+            } catch (error) {
+              // If stats fail, just return creator without stats
+              return creator
+            }
+          }
+          return creator
+        })
+      )
+      
+      setCreators(creatorsWithStats)
     } catch (error) {
       console.error('Error fetching creators:', error)
       setCreators([])
@@ -98,6 +125,55 @@ export default function Discover() {
                       {creator.storefront.description}
                     </p>
                   )}
+                  
+                  {/* Stats Section */}
+                  {creator.stats && creator.stats.totalPicks > 0 ? (
+                    <div className="mb-4 p-4 bg-slate-900/50 rounded-lg border border-slate-700">
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <p className="text-gray-400 text-xs mb-1">Win Rate</p>
+                          <p className="text-white font-semibold">{creator.stats.winRate.toFixed(1)}%</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400 text-xs mb-1">ROI</p>
+                          <p className={`font-semibold ${creator.stats.roi >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {creator.stats.roi >= 0 ? '+' : ''}{creator.stats.roi.toFixed(1)}%
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400 text-xs mb-1">Total Picks</p>
+                          <p className="text-white font-semibold">{creator.stats.totalPicks}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400 text-xs mb-1">Units Won</p>
+                          <p className={`font-semibold ${creator.stats.totalUnitsWon >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {creator.stats.totalUnitsWon >= 0 ? '+' : ''}{creator.stats.totalUnitsWon.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                      {creator.stats.transparencyScore > 0 && (
+                        <div className="mt-3 pt-3 border-t border-slate-700">
+                          <div className="flex items-center justify-between">
+                            <p className="text-gray-400 text-xs">Transparency Score</p>
+                            <div className="flex items-center gap-2">
+                              <div className="w-16 h-2 bg-slate-700 rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all"
+                                  style={{ width: `${creator.stats.transparencyScore}%` }}
+                                />
+                              </div>
+                              <p className="text-white text-xs font-semibold">{creator.stats.transparencyScore.toFixed(1)}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="mb-4 p-4 bg-slate-900/50 rounded-lg border border-slate-700 text-center">
+                      <p className="text-gray-500 text-xs">No verified picks yet</p>
+                    </div>
+                  )}
+                  
                   <span className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold text-sm inline-block">
                     View Creator Profile
                   </span>
