@@ -12,6 +12,111 @@ interface Plan {
   name: string
 }
 
+interface Game {
+  gameId: string
+  sport: string
+  league: string
+  homeTeam: { name: string; abbreviation?: string }
+  awayTeam: { name: string; abbreviation?: string }
+  startTime: string
+  status: string
+}
+
+function GameSearchModal({ sport, onSelectGame, onClose }: { sport: string; onSelectGame: (game: Game) => void; onClose: () => void }) {
+  const [games, setGames] = useState<Game[]>([])
+  const [loading, setLoading] = useState(false)
+  const [searchDate, setSearchDate] = useState(new Date().toISOString().split('T')[0])
+
+  useEffect(() => {
+    if (sport && searchDate) {
+      fetchGames()
+    }
+  }, [sport, searchDate])
+
+  const fetchGames = async () => {
+    if (!sport) return
+    setLoading(true)
+    try {
+      const endDate = new Date(searchDate)
+      endDate.setDate(endDate.getDate() + 7) // Search next 7 days
+      const response = await api.get('/games', {
+        params: {
+          sport,
+          startDate: searchDate,
+          endDate: endDate.toISOString().split('T')[0]
+        }
+      })
+      setGames(response.data || [])
+    } catch (error) {
+      console.error('Error fetching games:', error)
+      setGames([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+      <div className="bg-slate-900 rounded-lg border border-slate-800 max-w-2xl w-full p-6 max-h-[80vh] overflow-y-auto">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-xl font-semibold text-white">Search Games</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
+          <input
+            type="date"
+            value={searchDate}
+            onChange={(e) => setSearchDate(e.target.value)}
+            className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-white rounded-lg"
+          />
+        </div>
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 mx-auto"></div>
+            <p className="text-gray-400 mt-2">Loading games...</p>
+          </div>
+        ) : games.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-400">No games found. You can enter the game manually below.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {games.map((game) => (
+              <button
+                key={game.gameId}
+                onClick={() => onSelectGame(game)}
+                className="w-full text-left px-4 py-3 bg-slate-800 border border-slate-700 rounded-lg hover:border-primary-500 hover:bg-slate-700 transition-all"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-white font-semibold">
+                      {game.awayTeam?.name || 'Away'} @ {game.homeTeam?.name || 'Home'}
+                    </p>
+                    <p className="text-gray-400 text-sm">
+                      {new Date(game.startTime).toLocaleString()} • {game.league}
+                    </p>
+                  </div>
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function NewPickPage() {
   const router = useRouter()
   const { user } = useAuth()
