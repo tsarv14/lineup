@@ -21,6 +21,7 @@ require('./models/Message');
 require('./models/Event');
 require('./models/CreatorApplication');
 require('./models/ApprovedHandle');
+require('./models/Game'); // Phase B: Games from sports API
 
 const app = express();
 
@@ -95,6 +96,8 @@ app.use('/api/stripe', require('./routes/stripe'));
 app.use('/api/analytics', require('./routes/analytics'));
 app.use('/api/applications', require('./routes/applications'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/games', require('./routes/games')); // Phase B: Games API
+app.use('/api/grading', require('./routes/grading')); // Phase B: Grading job endpoints
 
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -137,6 +140,18 @@ const startServer = (port) => {
   try {
     const server = app.listen(port, () => {
       console.log(`🚀 Lineup server running on port ${port}`);
+      
+      // Phase B: Start grading job scheduler (runs every 10 minutes)
+      if (process.env.ENABLE_GRADING_SCHEDULER === 'true') {
+        const { runGradingJob } = require('./jobs/grading');
+        console.log('📊 Grading scheduler enabled');
+        
+        // Schedule periodic runs (every 10 minutes)
+        setInterval(() => {
+          console.log('🔄 Running scheduled grading job...');
+          runGradingJob().catch(err => console.error('Scheduled grading job error:', err));
+        }, 10 * 60 * 1000); // 10 minutes
+      }
     });
 
     server.on('error', (err) => {

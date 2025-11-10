@@ -353,6 +353,27 @@ router.post('/picks', async (req, res) => {
     // Determine verification status (Phase A: verified if posted before game start)
     const isVerified = now < gameStart;
     const verificationSource = isVerified ? 'system' : 'manual';
+    
+    // Phase B: If gameId provided, fetch game and store API odds
+    let apiOddsAtPost = null;
+    if (gameId) {
+      try {
+        const Game = require('../models/Game');
+        const game = await Game.findOne({ gameId });
+        if (game && game.openingLines) {
+          // Store API odds at post time for CLV calculation
+          apiOddsAtPost = {
+            provider: game.provider,
+            fetchedAt: new Date(),
+            lines: game.openingLines,
+            gameId: game.gameId
+          };
+        }
+      } catch (err) {
+        console.log('Could not fetch game for API odds:', err.message);
+        // Continue without API odds - not critical
+      }
+    }
 
     const pickData = {
       creator: req.user._id,
@@ -378,6 +399,9 @@ router.post('/picks', async (req, res) => {
       result: 'pending',
       isVerified,
       verificationSource,
+      
+      // Phase B: Store API odds if available
+      apiOddsAtPost: apiOddsAtPost || null,
       
       // Legacy fields (for backward compatibility)
       title: title || `${selection} (${sport})`,
