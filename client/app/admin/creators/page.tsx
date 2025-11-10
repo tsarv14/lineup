@@ -121,9 +121,7 @@ export default function AdminCreatorsPage() {
 
         {creators.length === 0 ? (
           <div className="bg-slate-900/50 rounded-lg border border-slate-800 p-12 text-center">
-            <p className="text-gray-400 text-lg mb-4">No creators found</p>
-            <p className="text-gray-500 text-sm mb-4">If you approved a creator but they're not showing up, use the manual creator tool below.</p>
-            <ManualCreatorForm onSuccess={fetchCreators} />
+            <p className="text-gray-400 text-lg">No creators found</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -264,7 +262,7 @@ function ManualCreatorForm({ onSuccess }: { onSuccess: () => void }) {
           value={handle}
           onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
           className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          placeholder="tsarv14"
+          placeholder="creator-handle"
           required
         />
       </div>
@@ -275,7 +273,7 @@ function ManualCreatorForm({ onSuccess }: { onSuccess: () => void }) {
           value={displayName}
           onChange={(e) => setDisplayName(e.target.value)}
           className="w-full px-4 py-2 bg-slate-800 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          placeholder="Tsarv Bets"
+          placeholder="Creator Display Name"
           required
         />
       </div>
