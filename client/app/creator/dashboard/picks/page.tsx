@@ -21,6 +21,18 @@ interface Pick {
   publishedAt: string
   createdAt: string
   tags: string[]
+  // Phase A fields
+  selection?: string
+  betType?: string
+  oddsAmerican?: number
+  unitsRisked?: number
+  amountRisked?: number
+  unitValueAtPost?: number
+  gameStartTime?: string
+  status?: 'pending' | 'locked' | 'graded' | 'disputed'
+  isVerified?: boolean
+  verificationSource?: 'manual' | 'system' | 'api'
+  flagged?: boolean
 }
 
 export default function PicksPage() {
@@ -174,11 +186,31 @@ export default function PicksPage() {
               <div className="relative z-10">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <h3 className="text-xl font-bold text-white">{pick.title}</h3>
+                    <div className="flex items-center gap-3 mb-3 flex-wrap">
+                      <h3 className="text-xl font-bold text-white">
+                        {pick.selection || pick.title}
+                      </h3>
                       <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${getResultBadge(pick.result || 'pending')}`}>
                         {pick.result || 'pending'}
                       </span>
+                      {pick.isVerified && (
+                        <span className="px-2.5 py-1 bg-green-500/20 text-green-400 rounded-lg text-xs font-semibold border border-green-500/30 flex items-center gap-1">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Verified
+                        </span>
+                      )}
+                      {pick.flagged && (
+                        <span className="px-2.5 py-1 bg-red-500/20 text-red-400 rounded-lg text-xs font-semibold border border-red-500/30">
+                          Flagged
+                        </span>
+                      )}
+                      {pick.status === 'locked' && (
+                        <span className="px-2.5 py-1 bg-yellow-500/20 text-yellow-400 rounded-lg text-xs font-semibold border border-yellow-500/30">
+                          Locked
+                        </span>
+                      )}
                       {pick.isFree ? (
                         <span className="px-2.5 py-1 bg-green-500/20 text-green-400 rounded-lg text-xs font-semibold border border-green-500/30">
                           Free
@@ -189,7 +221,10 @@ export default function PicksPage() {
                         </span>
                       )}
                     </div>
-                    {pick.description && (
+                    {pick.writeUp && (
+                      <p className="text-gray-300 mb-4 line-clamp-2">{pick.writeUp}</p>
+                    )}
+                    {pick.description && !pick.writeUp && (
                       <p className="text-gray-300 mb-4 line-clamp-2">{pick.description}</p>
                     )}
                   </div>
@@ -205,34 +240,68 @@ export default function PicksPage() {
                       <span className="text-white font-medium">{pick.sport}</span>
                     </div>
                   )}
-                  {pick.marketType && (
+                  {(pick.betType || pick.marketType) && (
                     <div className="flex items-center gap-2 text-sm">
                       <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                       </svg>
-                      <span className="text-gray-400">Market:</span>
-                      <span className="text-white font-medium capitalize">{pick.marketType}</span>
+                      <span className="text-gray-400">Type:</span>
+                      <span className="text-white font-medium capitalize">{pick.betType || pick.marketType}</span>
                     </div>
                   )}
-                  {pick.odds && (
+                  {(pick.oddsAmerican !== undefined || pick.odds) && (
                     <div className="flex items-center gap-2 text-sm">
                       <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                       <span className="text-gray-400">Odds:</span>
-                      <span className="text-white font-medium">{pick.odds}</span>
+                      <span className="text-white font-medium">
+                        {pick.oddsAmerican !== undefined ? (pick.oddsAmerican > 0 ? `+${pick.oddsAmerican}` : pick.oddsAmerican) : pick.odds}
+                      </span>
                     </div>
                   )}
-                  {pick.stake && (
+                  {(pick.unitsRisked !== undefined || pick.stake) && (
                     <div className="flex items-center gap-2 text-sm">
                       <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <span className="text-gray-400">Stake:</span>
-                      <span className="text-white font-medium">{pick.stake}</span>
+                      <span className="text-gray-400">Risk:</span>
+                      <span className="text-white font-medium">
+                        {pick.unitsRisked !== undefined 
+                          ? `${pick.unitsRisked} unit${pick.unitsRisked !== 1 ? 's' : ''} ($${((pick.amountRisked || 0) / 100).toFixed(2)})`
+                          : pick.stake}
+                      </span>
                     </div>
                   )}
                 </div>
+                
+                {/* Phase A: Verification and timing info */}
+                {pick.gameStartTime && (
+                  <div className="mb-4 p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                    <div className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-4">
+                        <div>
+                          <span className="text-gray-400">Game Start:</span>
+                          <span className="text-white ml-2">{new Date(pick.gameStartTime).toLocaleString()}</span>
+                        </div>
+                        {pick.createdAt && (
+                          <div>
+                            <span className="text-gray-400">Posted:</span>
+                            <span className="text-white ml-2">{new Date(pick.createdAt).toLocaleString()}</span>
+                          </div>
+                        )}
+                      </div>
+                      {pick.isVerified && (
+                        <div className="flex items-center gap-1 text-green-400 text-xs">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Posted before tip-off
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {pick.tags && pick.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-4">
@@ -262,15 +331,24 @@ export default function PicksPage() {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Link
-                      href={`/creator/dashboard/picks/${pick._id}/edit`}
-                      className="px-4 py-2 bg-black/60 text-white rounded-lg hover:bg-black/80 transition-all border border-slate-700 hover:border-primary-500/50 flex items-center gap-2 text-sm font-medium"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                      </svg>
-                      Edit
-                    </Link>
+                    {pick.status === 'locked' ? (
+                      <span className="px-4 py-2 bg-slate-700/50 text-gray-400 rounded-lg border border-slate-700 flex items-center gap-2 text-sm font-medium cursor-not-allowed">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                        Locked
+                      </span>
+                    ) : (
+                      <Link
+                        href={`/creator/dashboard/picks/${pick._id}/edit`}
+                        className="px-4 py-2 bg-black/60 text-white rounded-lg hover:bg-black/80 transition-all border border-slate-700 hover:border-primary-500/50 flex items-center gap-2 text-sm font-medium"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                        Edit
+                      </Link>
+                    )}
                     <button
                       onClick={() => handleDelete(pick._id)}
                       className="px-4 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-all border border-red-500/30 hover:border-red-500/50 flex items-center gap-2 text-sm font-medium"

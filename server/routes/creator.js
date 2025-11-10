@@ -604,6 +604,10 @@ router.get('/stats', async (req, res) => {
   try {
     const userId = req.user._id;
     
+    // Fetch user to get unitValueDefault
+    const User = require('../models/User');
+    const user = await User.findById(userId);
+    
     const picks = await Pick.find({ creator: userId });
     
     // Calculate stats
@@ -636,7 +640,7 @@ router.get('/stats', async (req, res) => {
       pushes,
       winRate,
       roi,
-      unitValueDefault: req.user.unitValueDefault || null
+      unitValueDefault: user?.unitValueDefault || null
     });
   } catch (error) {
     console.error('Get creator stats error:', error);

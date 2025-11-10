@@ -137,6 +137,32 @@ export default function AdminDashboard() {
               </svg>
             </div>
           </Link>
+
+          {/* Pick Management Card */}
+          <Link
+            href="/admin/picks"
+            className="bg-slate-900/50 rounded-lg border border-slate-800 p-6 hover:border-primary-500/50 transition-all group"
+          >
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-purple-600/20 rounded-lg flex items-center justify-center group-hover:bg-purple-600/30 transition-colors">
+                <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-white group-hover:text-purple-400 transition-colors">
+                  Pick Management
+                </h3>
+                <p className="text-gray-400 text-sm">View, flag, and manage all picks</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 text-purple-400 text-sm font-medium">
+              <span>Manage Picks</span>
+              <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </Link>
         </div>
       </div>
     </div>

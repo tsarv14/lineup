@@ -2,6 +2,8 @@ const express = require('express');
 const User = require('../models/User');
 const Storefront = require('../models/Storefront');
 const CreatorApplication = require('../models/CreatorApplication');
+const Pick = require('../models/Pick');
+const AuditLog = require('../models/AuditLog');
 const auth = require('../middleware/auth');
 const adminAuth = require('../middleware/admin');
 
@@ -569,6 +571,84 @@ router.get('/sales', auth, adminAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('Get admin sales error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   GET /api/admin/picks
+// @desc    Get all picks (admin only)
+// @access  Private (admin)
+router.get('/picks', auth, adminAuth, async (req, res) => {
+  try {
+    const { filter } = req.query;
+    
+    let query = {};
+    if (filter === 'flagged') {
+      query = { flagged: true };
+    } else if (filter === 'pending') {
+      query = { status: 'pending' };
+    } else if (filter === 'locked') {
+      query = { status: 'locked' };
+    } else if (filter === 'graded') {
+      query = { status: 'graded' };
+    } else if (filter === 'disputed') {
+      query = { status: 'disputed' };
+    }
+    
+    const picks = await Pick.find(query)
+      .populate('creator', 'username email')
+      .populate('storefront', 'handle displayName')
+      .sort({ createdAt: -1 })
+      .limit(100);
+    
+    res.json(picks);
+  } catch (error) {
+    console.error('Get admin picks error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/admin/flag
+// @desc    Flag a pick (admin only)
+// @access  Private (admin)
+router.post('/flag', auth, adminAuth, async (req, res) => {
+  try {
+    const { pickId, reason } = req.body;
+    
+    if (!pickId || !reason) {
+      return res.status(400).json({ message: 'Pick ID and reason are required' });
+    }
+    
+    const pick = await Pick.findById(pickId);
+    if (!pick) {
+      return res.status(404).json({ message: 'Pick not found' });
+    }
+    
+    pick.flagged = true;
+    if (!pick.flags) pick.flags = [];
+    pick.flags.push({
+      reason,
+      flaggedBy: req.user._id,
+      flaggedAt: new Date()
+    });
+    
+    await pick.save();
+    
+    // Create audit log
+    const AuditLog = require('../models/AuditLog');
+    await AuditLog.create({
+      userId: req.user._id,
+      action: 'pick.flag',
+      resourceType: 'Pick',
+      resourceId: pick._id,
+      metadata: { reason },
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent')
+    });
+    
+    res.json({ message: 'Pick flagged successfully', pick });
+  } catch (error) {
+    console.error('Flag pick error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
