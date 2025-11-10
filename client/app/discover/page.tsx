@@ -98,9 +98,9 @@ export default function Discover() {
                       {creator.storefront.description}
                     </p>
                   )}
-                  <div className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold text-sm inline-block">
+                  <span className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold text-sm inline-block">
                     View Creator Profile
-                  </div>
+                  </span>
                 </div>
               </Link>
             ))}

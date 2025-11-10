@@ -31,10 +31,13 @@ router.get('/', async (req, res) => {
 // @access  Public
 router.get('/:handle', async (req, res) => {
   try {
-    const storefront = await Storefront.findOne({ handle: req.params.handle })
+    // Normalize handle to lowercase for consistent lookup
+    const normalizedHandle = req.params.handle.toLowerCase().trim();
+    const storefront = await Storefront.findOne({ handle: normalizedHandle })
       .populate('owner', 'username firstName lastName avatar');
 
     if (!storefront) {
+      console.log(`Storefront not found for handle: ${normalizedHandle}`);
       return res.status(404).json({ message: 'Creator not found' });
     }
 
