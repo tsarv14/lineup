@@ -257,7 +257,7 @@ export default function Home() {
                       {/* Stats */}
                       <div className="mb-4 p-3 bg-slate-900/50 rounded-lg border border-slate-700">
                         <p className="text-white font-semibold text-xs text-center">
-                          ${(creator.stats?.totalDollarsWon || creator.stats?.totalUnitsWon * 100 || 0) >= 0 ? '+' : ''}{(creator.stats?.totalDollarsWon || creator.stats?.totalUnitsWon * 100 || 0).toFixed(2)} w/l | {(creator.stats?.totalUnitsWon || 0) >= 0 ? '+' : ''}{(creator.stats?.totalUnitsWon || 0).toFixed(2)} units w/l | {(creator.stats?.roi || 0) >= 0 ? '+' : ''}{(creator.stats?.roi || 0).toFixed(1)}% roi
+                          ${(creator.stats?.totalDollarsWon || (creator.stats?.totalUnitsWon || 0) * 100 || 0) >= 0 ? '+' : ''}{(creator.stats?.totalDollarsWon || (creator.stats?.totalUnitsWon || 0) * 100 || 0).toFixed(2)} w/l | {(creator.stats?.totalUnitsWon || 0) >= 0 ? '+' : ''}{(creator.stats?.totalUnitsWon || 0).toFixed(2)} units w/l | {(creator.stats?.roi || 0) >= 0 ? '+' : ''}{(creator.stats?.roi || 0).toFixed(1)}% roi
                         </p>
                       </div>
                       <div className="flex items-center justify-between">

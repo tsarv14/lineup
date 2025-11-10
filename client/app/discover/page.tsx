@@ -156,7 +156,7 @@ export default function Discover() {
                       <>
                         <div className="text-center mb-3">
                           <p className="text-white font-semibold text-sm">
-                            ${(creator.stats.totalDollarsWon || creator.stats.totalUnitsWon * 100 || 0) >= 0 ? '+' : ''}{(creator.stats.totalDollarsWon || creator.stats.totalUnitsWon * 100 || 0).toFixed(2)} w/l | {(creator.stats.totalUnitsWon || 0) >= 0 ? '+' : ''}{(creator.stats.totalUnitsWon || 0).toFixed(2)} units w/l | {(creator.stats.roi || 0) >= 0 ? '+' : ''}{(creator.stats.roi || 0).toFixed(1)}% roi
+                            ${(creator.stats.totalDollarsWon || (creator.stats.totalUnitsWon || 0) * 100 || 0) >= 0 ? '+' : ''}{(creator.stats.totalDollarsWon || (creator.stats.totalUnitsWon || 0) * 100 || 0).toFixed(2)} w/l | {(creator.stats.totalUnitsWon || 0) >= 0 ? '+' : ''}{(creator.stats.totalUnitsWon || 0).toFixed(2)} units w/l | {(creator.stats.roi || 0) >= 0 ? '+' : ''}{(creator.stats.roi || 0).toFixed(1)}% roi
                           </p>
                         </div>
                         {creator.stats.transparencyScore > 0 && (
