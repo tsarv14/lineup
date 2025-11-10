@@ -27,28 +27,36 @@ async function getUnitsWonLeaderboard(timeframe, sport, minUnits) {
     isVerified: true,
     status: 'graded',
     result: { $in: ['win', 'loss', 'push'] }
+    // Note: Parlays are included automatically since they're Pick documents
+    // with isParlay: true, but they have the same profitUnits, unitsRisked, result fields
   };
   
   if (startDate) {
     query.createdAt = { $gte: startDate };
   }
   
-  if (sport) {
+  if (sport && sport !== 'all') {
     query.sport = sport;
   }
   
-  // Aggregate picks by creator
+  // Aggregate picks by creator (includes both single picks and parlays)
+  // Parlays count as 1 pick, with their combined odds and units
   const pipeline = [
     { $match: query },
     {
       $group: {
         _id: '$creator',
-        totalUnitsWon: { $sum: '$profitUnits' },
-        totalUnitsRisked: { $sum: '$unitsRisked' },
+        // Include parlays: they have profitUnits and unitsRisked at the top level
+        totalUnitsWon: { $sum: { $ifNull: ['$profitUnits', 0] } },
+        totalUnitsRisked: { $sum: { $ifNull: ['$unitsRisked', 0] } },
+        // Count parlays as 1 pick (not counting individual legs)
         totalPicks: { $sum: 1 },
+        // Count wins/losses: parlays have result at top level
         wins: { $sum: { $cond: [{ $eq: ['$result', 'win'] }, 1, 0] } },
         losses: { $sum: { $cond: [{ $eq: ['$result', 'loss'] }, 1, 0] } },
-        pushes: { $sum: { $cond: [{ $eq: ['$result', 'push'] }, 1, 0] } }
+        pushes: { $sum: { $cond: [{ $eq: ['$result', 'push'] }, 1, 0] } },
+        // Track parlay count separately for transparency
+        totalParlays: { $sum: { $cond: [{ $eq: ['$isParlay', true] }, 1, 0] } }
       }
     },
     {

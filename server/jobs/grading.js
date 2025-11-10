@@ -15,6 +15,78 @@ const { getGameScore, getClosingLines, getFinishedGames } = require('../services
 const { americanToDecimal } = require('../utils/oddsConverter');
 
 /**
+ * Grade a parlay pick
+ * @param {Object} pick - Parlay pick document
+ * @returns {Promise<Object>} Graded parlay result
+ */
+async function gradeParlay(pick) {
+  if (!pick.isParlay || !pick.parlayLegs || pick.parlayLegs.length === 0) {
+    throw new Error('Not a parlay pick');
+  }
+
+  const { calculateParlayResult, calculateParlayProfit } = require('../utils/parlayCalculator');
+  
+  // Grade each leg if not already graded
+  for (let i = 0; i < pick.parlayLegs.length; i++) {
+    const leg = pick.parlayLegs[i];
+    
+    if (leg.result === 'pending') {
+      // Try to grade this leg
+      try {
+        const Game = require('../models/Game');
+        const game = await Game.findOne({ gameId: leg.gameId });
+        
+        if (game && game.status === 'finished') {
+          // Grade the leg
+          const legResult = determinePickResult(leg, game);
+          pick.parlayLegs[i].result = legResult.result;
+        }
+      } catch (error) {
+        console.error(`Error grading parlay leg ${i + 1}:`, error);
+        // Continue with other legs
+      }
+    }
+  }
+
+  // Calculate overall parlay result
+  const parlayResult = calculateParlayResult(pick.parlayLegs);
+  pick.parlayResult = parlayResult;
+  pick.result = parlayResult;
+
+  // Calculate profit
+  const profit = calculateParlayProfit(pick, parlayResult);
+  pick.profitUnits = profit.profitUnits;
+  pick.profitAmount = profit.profitAmount;
+
+  // Update status
+  if (parlayResult !== 'pending') {
+    pick.status = 'graded';
+    pick.resolvedAt = new Date();
+  }
+
+  await pick.save();
+  
+  // Phase D: Create ledger entry for grading
+  try {
+    const LedgerEntry = require('../models/LedgerEntry');
+    await LedgerEntry.createEntry(pick, 'grade');
+  } catch (ledgerError) {
+    console.error('Ledger entry creation error (non-critical):', ledgerError);
+  }
+  
+  return {
+    pickId: pick._id,
+    result: parlayResult,
+    profitUnits: profit.profitUnits,
+    profitAmount: profit.profitAmount,
+    legResults: pick.parlayLegs.map(leg => ({
+      selection: leg.selection,
+      result: leg.result
+    }))
+  };
+}
+
+/**
  * Grade a single pick based on game result
  * @param {Object} pick - Pick document
  * @param {Object} game - Game document with final score
@@ -22,6 +94,11 @@ const { americanToDecimal } = require('../utils/oddsConverter');
  * @returns {Object} Graded pick result
  */
 async function gradePick(pick, game, closingLines) {
+  // If it's a parlay, use parlay grading
+  if (pick.isParlay) {
+    return await gradeParlay(pick);
+  }
+  
   const result = determinePickResult(pick, game);
   const profit = calculateProfit(pick, result);
   const clvScore = calculateCLV(pick, closingLines);

@@ -688,22 +688,29 @@ router.get('/stats', async (req, res) => {
     
     const picks = await Pick.find({ creator: userId });
     
-    // Calculate stats
+    // Calculate stats (includes both single picks and parlays)
+    // Parlays count as 1 pick with their combined odds and units
     const totalPicks = picks.length;
     const verifiedPicks = picks.filter(p => p.isVerified).length;
     const gradedPicks = picks.filter(p => p.status === 'graded');
     
+    // Include parlays: they have unitsRisked and profitUnits at the top level
     const totalUnitsRisked = picks.reduce((sum, p) => sum + (p.unitsRisked || 0), 0);
     const totalUnitsWon = picks.reduce((sum, p) => sum + (p.profitUnits || 0), 0);
     const totalAmountRisked = picks.reduce((sum, p) => sum + (p.amountRisked || 0), 0);
     const totalAmountWon = picks.reduce((sum, p) => sum + (p.profitAmount || 0), 0);
     
-    const wins = picks.filter(p => p.result === 'win').length;
-    const losses = picks.filter(p => p.result === 'loss').length;
-    const pushes = picks.filter(p => p.result === 'push').length;
+    // Count wins/losses: parlays have result at top level (parlayResult)
+    const wins = picks.filter(p => p.result === 'win' || (p.isParlay && p.parlayResult === 'win')).length;
+    const losses = picks.filter(p => p.result === 'loss' || (p.isParlay && p.parlayResult === 'loss')).length;
+    const pushes = picks.filter(p => p.result === 'push' || (p.isParlay && p.parlayResult === 'push')).length;
     const winRate = (wins + losses + pushes) > 0 ? (wins / (wins + losses + pushes)) * 100 : 0;
     
     const roi = totalUnitsRisked > 0 ? ((totalUnitsWon / totalUnitsRisked) * 100) : 0;
+    
+    // Track parlay stats separately
+    const totalParlays = picks.filter(p => p.isParlay).length;
+    const parlayWins = picks.filter(p => p.isParlay && (p.parlayResult === 'win' || p.result === 'win')).length;
     
     res.json({
       totalPicks,
@@ -718,7 +725,11 @@ router.get('/stats', async (req, res) => {
       pushes,
       winRate,
       roi,
-      unitValueDefault: user?.unitValueDefault || null
+      unitValueDefault: user?.unitValueDefault || null,
+      // Parlay-specific stats
+      totalParlays,
+      parlayWins,
+      parlayWinRate: totalParlays > 0 ? (parlayWins / totalParlays) * 100 : 0
     });
   } catch (error) {
     console.error('Get creator stats error:', error);

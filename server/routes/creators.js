@@ -100,11 +100,13 @@ router.get('/:handle/stats', async (req, res) => {
       status: 'graded'
     });
     
+    // Include parlays: they have result at top level (parlayResult or result)
     const stats = {
-      totalPicks: picks.length,
-      wins: picks.filter(p => p.result === 'win').length,
-      losses: picks.filter(p => p.result === 'loss').length,
-      pushes: picks.filter(p => p.result === 'push').length,
+      totalPicks: picks.length, // Parlays count as 1 pick
+      wins: picks.filter(p => p.result === 'win' || (p.isParlay && p.parlayResult === 'win')).length,
+      losses: picks.filter(p => p.result === 'loss' || (p.isParlay && p.parlayResult === 'loss')).length,
+      pushes: picks.filter(p => p.result === 'push' || (p.isParlay && p.parlayResult === 'push')).length,
+      // Include parlays: they have unitsRisked and profitUnits at the top level
       totalUnitsRisked: picks.reduce((sum, p) => sum + (p.unitsRisked || 0), 0),
       totalUnitsWon: picks.reduce((sum, p) => sum + (p.profitUnits || 0), 0)
     };
