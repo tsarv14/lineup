@@ -50,15 +50,26 @@ router.post('/', [
     // Note: We don't block based on pending applications - multiple users can submit applications
     // with the same handle, and the admin will decide which one to approve
 
-    // Check if user already has an application
+    // Check if user already has a pending application (only one pending at a time)
     if (userId) {
-      const existingUserApplication = await CreatorApplication.findOne({
+      const existingPendingApplication = await CreatorApplication.findOne({
         user: userId,
-        status: { $in: ['pending', 'approved'] }
+        status: 'pending'
       });
-      if (existingUserApplication) {
-        return res.status(400).json({ message: 'You already have a pending or approved application' });
+      if (existingPendingApplication) {
+        return res.status(400).json({ message: 'You already have a pending application. Please wait for it to be reviewed.' });
       }
+
+      // Check if user already has an approved application (can't apply again if approved)
+      const existingApprovedApplication = await CreatorApplication.findOne({
+        user: userId,
+        status: 'approved'
+      });
+      if (existingApprovedApplication) {
+        return res.status(400).json({ message: 'You already have an approved application. You are already a creator.' });
+      }
+
+      // Note: Rejected applications are allowed - user can apply again after rejection
     }
 
     // Create application
