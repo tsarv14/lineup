@@ -293,16 +293,202 @@ router.post('/picks', async (req, res) => {
   try {
     const { 
       // Phase A structured fields
-      sport, league, gameId, gameText, betType, selection, oddsAmerican,
+      sport, league, gameId, gameText, betType, selection, oddsAmerican, oddsDecimal,
       unitsRisked, amountRisked, unitValue, writeUp,
       // Legacy fields (for backward compatibility)
       title, description, marketType, odds, stake,
       isFree, plans, oneOffPriceCents, eventDate, scheduledAt, 
       tags, media,
       // Game timing
-      gameStartTime
+      gameStartTime,
+      // Parlay fields
+      isParlay, parlayLegs
     } = req.body;
 
+    // Handle parlay creation
+    if (isParlay && parlayLegs && Array.isArray(parlayLegs) && parlayLegs.length >= 2) {
+      // Validate all parlay legs
+      for (let i = 0; i < parlayLegs.length; i++) {
+        const leg = parlayLegs[i];
+        if (!leg.sport || !leg.league || !leg.betType || !leg.selection || leg.oddsAmerican === undefined || !leg.gameStartTime) {
+          return res.status(400).json({ 
+            message: `Missing required fields for leg ${i + 1}: sport, league, betType, selection, oddsAmerican, gameStartTime` 
+          });
+        }
+      }
+
+      // Use first leg's sport/league as primary, earliest game start time
+      const primarySport = parlayLegs[0].sport;
+      const primaryLeague = parlayLegs[0].league;
+      const earliestGameStart = parlayLegs.reduce((earliest, leg) => {
+        const legTime = new Date(leg.gameStartTime);
+        return legTime < earliest ? legTime : earliest;
+      }, new Date(parlayLegs[0].gameStartTime));
+
+      const gameStart = new Date(earliestGameStart);
+      const now = new Date();
+
+      if (gameStart <= now) {
+        return res.status(400).json({ 
+          message: 'Cannot create parlay: earliest game start time must be in the future' 
+        });
+      }
+
+      const storefront = await Storefront.findOne({ owner: req.user._id });
+      if (!storefront) {
+        return res.status(400).json({ message: 'Please create a storefront first' });
+      }
+
+      const creator = await User.findById(req.user._id);
+      const unitValueAtPost = unitValue || creator.unitValueDefault || 100;
+
+      if (!unitValueAtPost || unitValueAtPost <= 0) {
+        return res.status(400).json({ 
+          message: 'Unit value must be set. Please set your default unit value in settings.' 
+        });
+      }
+
+      // Validate parlay odds
+      const { americanToDecimal, isValidAmericanOdds } = require('../utils/oddsConverter');
+      if (!isValidAmericanOdds(oddsAmerican)) {
+        return res.status(400).json({ message: 'Invalid parlay odds' });
+      }
+
+      const finalOddsDecimal = oddsDecimal || americanToDecimal(oddsAmerican);
+      const finalAmountRisked = amountRisked || Math.round(unitsRisked * unitValueAtPost);
+
+      // Determine verification status
+      const isVerified = now < gameStart;
+      const verificationSource = isVerified ? 'system' : 'manual';
+
+      // Build parlay legs data
+      const parlayLegsData = parlayLegs.map(leg => {
+        const legGameStart = new Date(leg.gameStartTime);
+        const legOddsDecimal = leg.oddsDecimal || americanToDecimal(leg.oddsAmerican);
+        
+        return {
+          sport: leg.sport,
+          league: leg.league,
+          gameId: leg.gameId || null,
+          gameText: leg.gameText || null,
+          betType: leg.betType,
+          selection: leg.selection,
+          oddsAmerican: leg.oddsAmerican,
+          oddsDecimal: legOddsDecimal,
+          gameStartTime: legGameStart,
+          result: 'pending'
+        };
+      });
+
+      const pickData = {
+        creator: req.user._id,
+        storefront: storefront._id,
+        sport: primarySport,
+        league: primaryLeague,
+        betType: 'parlay',
+        selection: `Parlay (${parlayLegs.length} legs)`,
+        oddsAmerican,
+        oddsDecimal: finalOddsDecimal,
+        unitsRisked,
+        amountRisked: finalAmountRisked,
+        unitValueAtPost,
+        gameStartTime: gameStart,
+        writeUp: writeUp || null,
+        status: 'pending',
+        result: 'pending',
+        parlayResult: 'pending',
+        isVerified,
+        verificationSource,
+        isParlay: true,
+        parlayLegs: parlayLegsData,
+        // Legacy fields
+        title: title || `Parlay (${parlayLegs.length} legs)`,
+        description: writeUp || description || null,
+        marketType: 'parlay',
+        odds: odds || oddsAmerican.toString(),
+        stake: stake || `${unitsRisked} unit${unitsRisked !== 1 ? 's' : ''}`,
+        isFree: isFree || false,
+        plans: plans || [],
+        oneOffPriceCents: oneOffPriceCents || 0,
+        eventDate: gameStart,
+        scheduledAt: scheduledAt ? new Date(scheduledAt) : undefined,
+        tags: tags || [],
+        media: media || []
+      };
+
+      if (!scheduledAt) {
+        pickData.publishedAt = new Date();
+      }
+
+      const pick = new Pick(pickData);
+      await pick.save();
+
+      // Phase D: Create immutable ledger entry
+      try {
+        const LedgerEntry = require('../models/LedgerEntry');
+        await LedgerEntry.createEntry(pick, 'create');
+      } catch (ledgerError) {
+        console.error('Ledger entry creation error (non-critical):', ledgerError);
+      }
+
+      // Phase C: Run fraud detection checks
+      try {
+        const { runFraudChecks, getCreatorStatsForFraud } = require('../services/antiFraud');
+        const creatorStats = await getCreatorStatsForFraud(req.user._id);
+        const recentPicks = await Pick.find({ creator: req.user._id })
+          .sort({ createdAt: -1 })
+          .limit(10);
+        
+        const fraudCheck = await runFraudChecks(pick, creatorStats, recentPicks, null);
+        
+        if (fraudCheck.shouldFlag) {
+          pick.flagged = true;
+          if (!pick.flags) pick.flags = [];
+          fraudCheck.flags.forEach(flag => {
+            pick.flags.push({
+              reason: flag.reason,
+              flaggedBy: null,
+              flaggedAt: new Date()
+            });
+          });
+          await pick.save();
+        }
+        
+        if (!pick.metadata) pick.metadata = {};
+        pick.metadata.fraudCheck = {
+          fraudScore: fraudCheck.fraudScore,
+          shouldExcludeFromLeaderboards: fraudCheck.shouldExcludeFromLeaderboards,
+          checkedAt: new Date()
+        };
+        await pick.save();
+      } catch (fraudError) {
+        console.error('Fraud detection error (non-critical):', fraudError);
+      }
+
+      // Create audit log
+      const AuditLog = require('../models/AuditLog');
+      await AuditLog.create({
+        userId: req.user._id,
+        action: 'pick.create',
+        resourceType: 'Pick',
+        resourceId: pick._id,
+        metadata: {
+          sport: primarySport,
+          betType: 'parlay',
+          selection: `Parlay (${parlayLegs.length} legs)`,
+          unitsRisked,
+          isVerified,
+          isParlay: true,
+          legCount: parlayLegs.length
+        },
+        ipAddress: req.ip,
+        userAgent: req.get('user-agent')
+      });
+
+      return res.status(201).json(pick);
+    }
+
+    // Straight pick creation (existing logic)
     // Phase A validation: require structured pick fields
     if (!sport || !betType || !selection || oddsAmerican === undefined || !unitsRisked) {
       return res.status(400).json({ 

@@ -40,6 +40,21 @@ interface OddsOption {
   bookmaker?: string
 }
 
+interface ParlayLeg {
+  id: string
+  sport: string
+  league: string
+  gameId?: string
+  gameText?: string
+  betType: 'moneyline' | 'spread' | 'total' | 'prop' | 'other'
+  selection: string
+  selectedTeam?: string
+  selectedPlayer?: string
+  oddsAmerican: string
+  gameStartTime: string
+  selectedGame?: Game | null
+}
+
 function GameSearchModal({ 
   sport, 
   league, 
@@ -161,6 +176,10 @@ export default function NewPickPage() {
   const [availableOdds, setAvailableOdds] = useState<OddsOption[]>([])
   const [fetchingOdds, setFetchingOdds] = useState(false)
   const [oddsValidation, setOddsValidation] = useState<{ valid: boolean; message?: string } | null>(null)
+  const [parlayLegs, setParlayLegs] = useState<ParlayLeg[]>([])
+  const [gameSearchForLeg, setGameSearchForLeg] = useState<number | null>(null)
+  const [legLeagues, setLegLeagues] = useState<Record<string, string[]>>({})
+  const [calculatedParlayOdds, setCalculatedParlayOdds] = useState<{ oddsDecimal: number; oddsAmerican: number } | null>(null)
   
   const [formData, setFormData] = useState({
     // Pick type
@@ -235,6 +254,16 @@ export default function NewPickPage() {
       setOddsValidation(null)
     }
   }, [formData.oddsAmerican, availableOdds])
+
+  // Recalculate parlay odds when legs change
+  useEffect(() => {
+    if (formData.pickType === 'parlay' && parlayLegs.length > 0) {
+      const odds = calculateParlayOdds(parlayLegs)
+      setCalculatedParlayOdds(odds)
+    } else {
+      setCalculatedParlayOdds(null)
+    }
+  }, [parlayLegs, formData.pickType])
 
   const fetchPlans = async () => {
     try {
@@ -391,14 +420,40 @@ export default function NewPickPage() {
       setFormData({ ...formData, [name]: parseFloat(value) * 100 || 0 })
     } else if (name === 'pickType') {
       // Reset form when switching between straight and parlay
+      const newPickType = value as 'straight' | 'parlay'
       setFormData(prev => ({
         ...prev,
-        [name]: value as 'straight' | 'parlay',
+        [name]: newPickType,
         selection: '',
         selectedTeam: '',
         selectedPlayer: '',
         oddsAmerican: ''
       }))
+      // Reset parlay legs when switching to straight
+      if (newPickType === 'straight') {
+        setParlayLegs([])
+      } else if (newPickType === 'parlay' && parlayLegs.length === 0) {
+        // Initialize with 2 legs when switching to parlay
+        const leg1: ParlayLeg = {
+          id: Date.now().toString(),
+          sport: '',
+          league: '',
+          betType: 'moneyline',
+          selection: '',
+          oddsAmerican: '',
+          gameStartTime: ''
+        }
+        const leg2: ParlayLeg = {
+          id: (Date.now() + 1).toString(),
+          sport: '',
+          league: '',
+          betType: 'moneyline',
+          selection: '',
+          oddsAmerican: '',
+          gameStartTime: ''
+        }
+        setParlayLegs([leg1, leg2])
+      }
     } else if (name === 'betType') {
       // Reset selection fields when bet type changes
       setFormData(prev => ({
@@ -460,89 +515,258 @@ export default function NewPickPage() {
     return 'Less than 1 minute before start'
   }
 
+  // Parlay odds calculation
+  const americanToDecimal = (american: number): number => {
+    if (american > 0) {
+      return (american / 100) + 1
+    } else {
+      return (100 / Math.abs(american)) + 1
+    }
+  }
+
+  const decimalToAmerican = (decimal: number): number => {
+    if (decimal >= 2) {
+      return Math.round((decimal - 1) * 100)
+    } else {
+      return Math.round(-100 / (decimal - 1))
+    }
+  }
+
+  const calculateParlayOdds = (legs: ParlayLeg[]): { oddsDecimal: number; oddsAmerican: number } | null => {
+    if (legs.length === 0) return null
+    
+    const validLegs = legs.filter(leg => leg.oddsAmerican && !isNaN(parseInt(leg.oddsAmerican)))
+    if (validLegs.length === 0) return null
+
+    let parlayDecimal = 1
+    for (const leg of validLegs) {
+      const legDecimal = americanToDecimal(parseInt(leg.oddsAmerican))
+      if (legDecimal <= 0) return null
+      parlayDecimal *= legDecimal
+    }
+
+    const parlayAmerican = decimalToAmerican(parlayDecimal)
+    return {
+      oddsDecimal: Math.round(parlayDecimal * 10000) / 10000,
+      oddsAmerican: Math.round(parlayAmerican)
+    }
+  }
+
+  // Parlay leg management
+  const addParlayLeg = () => {
+    const newLeg: ParlayLeg = {
+      id: Date.now().toString(),
+      sport: '',
+      league: '',
+      betType: 'moneyline',
+      selection: '',
+      oddsAmerican: '',
+      gameStartTime: ''
+    }
+    setParlayLegs([...parlayLegs, newLeg])
+  }
+
+  const removeParlayLeg = (legId: string) => {
+    setParlayLegs(parlayLegs.filter(leg => leg.id !== legId))
+  }
+
+  const updateParlayLeg = async (legId: string, updates: Partial<ParlayLeg>) => {
+    setParlayLegs(parlayLegs.map(leg => 
+      leg.id === legId ? { ...leg, ...updates } : leg
+    ))
+    
+    // Fetch leagues if sport changed
+    if (updates.sport) {
+      try {
+        const response = await api.get(`/games/leagues/${updates.sport}`)
+        setLegLeagues(prev => ({ ...prev, [legId]: response.data || [] }))
+      } catch (error) {
+        console.error('Error fetching leagues for leg:', error)
+        setLegLeagues(prev => ({ ...prev, [legId]: [] }))
+      }
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      // Validation
-      if (!formData.sport || !formData.league || !formData.betType) {
-        toast.error('Please fill in all required fields')
-        setLoading(false)
-        return
-      }
-
-      if (formData.betType !== 'future' && !selectedGame && !formData.gameText) {
-        toast.error('Please select a game or enter game details')
-        setLoading(false)
-        return
-      }
-
-      if (!formData.selection) {
-        toast.error('Please enter your selection')
-        setLoading(false)
-        return
-      }
-
-      if (!formData.oddsAmerican || !validateAmericanOdds(formData.oddsAmerican)) {
-        toast.error('Please enter valid American odds')
-        setLoading(false)
-        return
-      }
-
-      if (!formData.unitsRisked) {
-        toast.error('Please enter units risked')
-        setLoading(false)
-        return
-      }
-
-      if (formData.betType !== 'future' && !formData.gameStartTime) {
-        toast.error('Game start time is required')
-        setLoading(false)
-        return
-      }
-
-      if (formData.gameStartTime) {
-        const gameStart = new Date(formData.gameStartTime)
-        const now = new Date()
-        if (gameStart <= now) {
-          toast.error('Game start time must be in the future')
+      if (formData.pickType === 'parlay') {
+        // Parlay validation
+        if (parlayLegs.length < 2) {
+          toast.error('Parlay must have at least 2 legs')
           setLoading(false)
           return
         }
-      }
 
-      // Build selection string
-      let selection = formData.selection
-      if (formData.selectedTeam && formData.betType !== 'future') {
-        selection = `${formData.selectedTeam} ${selection}`
-      }
-      if (formData.selectedPlayer && formData.betType === 'prop') {
-        selection = `${formData.selectedPlayer} ${selection}`
-      }
+        // Validate all legs
+        for (let i = 0; i < parlayLegs.length; i++) {
+          const leg = parlayLegs[i]
+          if (!leg.sport || !leg.league || !leg.betType || !leg.selection || !leg.oddsAmerican || !leg.gameStartTime) {
+            toast.error(`Please fill in all fields for leg ${i + 1}`)
+            setLoading(false)
+            return
+          }
 
-      const payload = {
-        sport: formData.sport,
-        league: formData.league,
-        gameId: selectedGame?.gameId || null,
-        gameText: formData.gameText || null,
-        betType: formData.betType,
-        selection: selection,
-        oddsAmerican: parseInt(formData.oddsAmerican),
-        unitsRisked: parseFloat(formData.unitsRisked),
-        amountRisked: formData.amountRisked ? Math.round(parseFloat(formData.amountRisked) * 100) : undefined,
-        gameStartTime: formData.gameStartTime || null,
-        writeUp: formData.writeUp || null,
-        isFree: formData.isFree,
-        plans: formData.plans,
-        oneOffPriceCents: formData.oneOffPriceCents,
-        isParlay: formData.pickType === 'parlay'
+          if (!validateAmericanOdds(leg.oddsAmerican)) {
+            toast.error(`Invalid odds for leg ${i + 1}`)
+            setLoading(false)
+            return
+          }
+
+          const gameStart = new Date(leg.gameStartTime)
+          const now = new Date()
+          if (gameStart <= now) {
+            toast.error(`Game start time for leg ${i + 1} must be in the future`)
+            setLoading(false)
+            return
+          }
+        }
+
+        if (!formData.unitsRisked) {
+          toast.error('Please enter units risked')
+          setLoading(false)
+          return
+        }
+
+        // Calculate parlay odds
+        const parlayOdds = calculateParlayOdds(parlayLegs)
+        if (!parlayOdds) {
+          toast.error('Unable to calculate parlay odds. Please check all leg odds.')
+          setLoading(false)
+          return
+        }
+
+        // Build parlay legs for API
+        const parlayLegsData = parlayLegs.map(leg => {
+          let selection = leg.selection
+          if (leg.selectedTeam) {
+            selection = `${leg.selectedTeam} ${selection}`
+          }
+          if (leg.selectedPlayer) {
+            selection = `${leg.selectedPlayer} ${selection}`
+          }
+
+          return {
+            sport: leg.sport,
+            league: leg.league,
+            gameId: leg.gameId || null,
+            gameText: leg.gameText || null,
+            betType: leg.betType,
+            selection: selection,
+            oddsAmerican: parseInt(leg.oddsAmerican),
+            oddsDecimal: americanToDecimal(parseInt(leg.oddsAmerican)),
+            gameStartTime: leg.gameStartTime
+          }
+        })
+
+        // Use earliest game start time as the parlay's gameStartTime
+        const earliestGameStart = parlayLegs.reduce((earliest, leg) => {
+          const legTime = new Date(leg.gameStartTime)
+          return legTime < earliest ? legTime : earliest
+        }, new Date(parlayLegs[0].gameStartTime))
+
+        const payload = {
+          sport: parlayLegs[0].sport, // Use first leg's sport as primary
+          league: parlayLegs[0].league, // Use first leg's league as primary
+          betType: 'parlay',
+          selection: `Parlay (${parlayLegs.length} legs)`,
+          oddsAmerican: parlayOdds.oddsAmerican,
+          oddsDecimal: parlayOdds.oddsDecimal,
+          unitsRisked: parseFloat(formData.unitsRisked),
+          amountRisked: formData.amountRisked ? Math.round(parseFloat(formData.amountRisked) * 100) : undefined,
+          gameStartTime: earliestGameStart.toISOString(),
+          writeUp: formData.writeUp || null,
+          isFree: formData.isFree,
+          plans: formData.plans,
+          oneOffPriceCents: formData.oneOffPriceCents,
+          isParlay: true,
+          parlayLegs: parlayLegsData
+        }
+
+        await api.post('/creator/picks', payload)
+        toast.success('Parlay created successfully!')
+        router.push('/creator/dashboard/picks')
+      } else {
+        // Straight pick validation (existing logic)
+        if (!formData.sport || !formData.league || !formData.betType) {
+          toast.error('Please fill in all required fields')
+          setLoading(false)
+          return
+        }
+
+        if (formData.betType !== 'future' && !selectedGame && !formData.gameText) {
+          toast.error('Please select a game or enter game details')
+          setLoading(false)
+          return
+        }
+
+        if (!formData.selection) {
+          toast.error('Please enter your selection')
+          setLoading(false)
+          return
+        }
+
+        if (!formData.oddsAmerican || !validateAmericanOdds(formData.oddsAmerican)) {
+          toast.error('Please enter valid American odds')
+          setLoading(false)
+          return
+        }
+
+        if (!formData.unitsRisked) {
+          toast.error('Please enter units risked')
+          setLoading(false)
+          return
+        }
+
+        if (formData.betType !== 'future' && !formData.gameStartTime) {
+          toast.error('Game start time is required')
+          setLoading(false)
+          return
+        }
+
+        if (formData.gameStartTime) {
+          const gameStart = new Date(formData.gameStartTime)
+          const now = new Date()
+          if (gameStart <= now) {
+            toast.error('Game start time must be in the future')
+            setLoading(false)
+            return
+          }
+        }
+
+        // Build selection string
+        let selection = formData.selection
+        if (formData.selectedTeam && formData.betType !== 'future') {
+          selection = `${formData.selectedTeam} ${selection}`
+        }
+        if (formData.selectedPlayer && formData.betType === 'prop') {
+          selection = `${formData.selectedPlayer} ${selection}`
+        }
+
+        const payload = {
+          sport: formData.sport,
+          league: formData.league,
+          gameId: selectedGame?.gameId || null,
+          gameText: formData.gameText || null,
+          betType: formData.betType,
+          selection: selection,
+          oddsAmerican: parseInt(formData.oddsAmerican),
+          unitsRisked: parseFloat(formData.unitsRisked),
+          amountRisked: formData.amountRisked ? Math.round(parseFloat(formData.amountRisked) * 100) : undefined,
+          gameStartTime: formData.gameStartTime || null,
+          writeUp: formData.writeUp || null,
+          isFree: formData.isFree,
+          plans: formData.plans,
+          oneOffPriceCents: formData.oneOffPriceCents,
+          isParlay: false
+        }
+
+        await api.post('/creator/picks', payload)
+        toast.success('Pick created successfully!')
+        router.push('/creator/dashboard/picks')
       }
-
-      await api.post('/creator/picks', payload)
-
-      toast.success('Pick created successfully!')
-      router.push('/creator/dashboard/picks')
     } catch (error: any) {
       console.error('Create pick error:', error)
       toast.error(error.response?.data?.message || 'Failed to create pick')
@@ -632,6 +856,345 @@ export default function NewPickPage() {
               </p>
             </div>
 
+            {/* Parlay Form */}
+            {formData.pickType === 'parlay' ? (
+              <>
+                {/* Parlay Odds Display */}
+                {parlayLegs.length >= 2 && calculatedParlayOdds && (
+                  <div className="bg-gradient-to-r from-primary-600/20 to-primary-700/20 rounded-xl border-2 border-primary-500/50 p-6">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm text-gray-400 mb-1">Combined Parlay Odds</p>
+                        <p className="text-3xl font-bold text-white">
+                          {calculatedParlayOdds.oddsAmerican > 0 ? '+' : ''}
+                          {calculatedParlayOdds.oddsAmerican}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {parlayLegs.length} leg{parlayLegs.length !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-400 mb-1">Decimal Odds</p>
+                        <p className="text-2xl font-semibold text-primary-400">
+                          {calculatedParlayOdds.oddsDecimal.toFixed(4)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Parlay Legs */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-semibold text-gray-300">
+                      Parlay Legs * (Minimum 2)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={addParlayLeg}
+                      className="px-4 py-2 bg-primary-600/20 text-primary-400 border border-primary-500/30 rounded-lg hover:bg-primary-600/30 transition-all flex items-center gap-2 text-sm font-medium"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Add Leg
+                    </button>
+                  </div>
+
+                  {parlayLegs.map((leg, index) => (
+                    <div key={leg.id} className="bg-slate-900/50 rounded-lg border border-slate-700 p-6 space-y-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="text-lg font-semibold text-white">Leg {index + 1}</h4>
+                        {parlayLegs.length > 2 && (
+                          <button
+                            type="button"
+                            onClick={() => removeParlayLeg(leg.id)}
+                            className="px-3 py-1.5 bg-red-600/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-600/30 transition-all text-sm"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Sport */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-medium text-gray-400">Sport *</label>
+                          <select
+                            value={leg.sport}
+                            onChange={(e) => updateParlayLeg(leg.id, { sport: e.target.value, league: '' })}
+                            className="w-full px-3 py-2 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all text-sm"
+                          >
+                            <option value="">Select sport</option>
+                            <option value="Football">Football</option>
+                            <option value="College Football">College Football</option>
+                            <option value="Baseball">Baseball</option>
+                            <option value="Basketball">Basketball</option>
+                            <option value="Golf">Golf</option>
+                            <option value="Soccer">Soccer</option>
+                            <option value="Hockey">Hockey</option>
+                            <option value="Tennis">Tennis</option>
+                            <option value="MMA">MMA</option>
+                            <option value="Boxing">Boxing</option>
+                            <option value="Racing">Racing</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+
+                        {/* League */}
+                        <div className="space-y-2">
+                          <label className="text-xs font-medium text-gray-400">League *</label>
+                          <select
+                            value={leg.league}
+                            onChange={(e) => updateParlayLeg(leg.id, { league: e.target.value })}
+                            disabled={!leg.sport}
+                            className="w-full px-3 py-2 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <option value="">{leg.sport ? 'Select league' : 'Select sport first'}</option>
+                            {legLeagues[leg.id]?.map((league) => (
+                              <option key={league} value={league}>{league}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Bet Type */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium text-gray-400">Bet Type *</label>
+                        <select
+                          value={leg.betType}
+                          onChange={(e) => updateParlayLeg(leg.id, { betType: e.target.value as any })}
+                          className="w-full px-3 py-2 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all text-sm"
+                        >
+                          <option value="moneyline">Moneyline</option>
+                          <option value="spread">Spread</option>
+                          <option value="total">Total (Over/Under)</option>
+                          <option value="prop">Prop</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+
+                      {/* Game Selection */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium text-gray-400">Game *</label>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setGameSearchForLeg(index)}
+                            disabled={!leg.sport || !leg.league}
+                            className="flex-1 px-3 py-2 bg-black/60 border border-slate-700 text-white rounded-lg hover:border-primary-500/50 transition-all flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            {leg.selectedGame 
+                              ? `${leg.selectedGame.awayTeam?.name || 'Away'} @ ${leg.selectedGame.homeTeam?.name || 'Home'}` 
+                              : 'Search Games'}
+                          </button>
+                          {leg.selectedGame && (
+                            <button
+                              type="button"
+                              onClick={() => updateParlayLeg(leg.id, { selectedGame: null, gameId: '', gameText: '' })}
+                              className="px-3 py-2 bg-red-600/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-600/30 transition-all text-sm"
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
+                        {!leg.selectedGame && (
+                          <input
+                            type="text"
+                            value={leg.gameText || ''}
+                            onChange={(e) => updateParlayLeg(leg.id, { gameText: e.target.value })}
+                            placeholder="Or enter manually: e.g., Lakers vs Warriors"
+                            className="w-full px-3 py-2 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600 text-sm mt-2"
+                          />
+                        )}
+                        {gameSearchForLeg === index && (
+                          <GameSearchModal
+                            sport={leg.sport}
+                            league={leg.league}
+                            onSelectGame={(game) => {
+                              updateParlayLeg(leg.id, {
+                                selectedGame: game,
+                                gameId: game.gameId,
+                                gameText: `${game.awayTeam?.name || 'Away'} @ ${game.homeTeam?.name || 'Home'}`,
+                                gameStartTime: new Date(game.startTime).toISOString().slice(0, 16)
+                              })
+                              setGameSearchForLeg(null)
+                            }}
+                            onClose={() => setGameSearchForLeg(null)}
+                          />
+                        )}
+                      </div>
+
+                      {/* Selection and Odds */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-xs font-medium text-gray-400">Selection *</label>
+                          <input
+                            type="text"
+                            value={leg.selection}
+                            onChange={(e) => updateParlayLeg(leg.id, { selection: e.target.value })}
+                            className="w-full px-3 py-2 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600 text-sm"
+                            placeholder="e.g., Lakers -5.5"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-xs font-medium text-gray-400">Odds (American) *</label>
+                          <input
+                            type="text"
+                            value={leg.oddsAmerican}
+                            onChange={(e) => updateParlayLeg(leg.id, { oddsAmerican: e.target.value })}
+                            className="w-full px-3 py-2 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600 text-sm"
+                            placeholder="-110, +135"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Game Start Time */}
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium text-gray-400">Game Start Time *</label>
+                        <input
+                          type="datetime-local"
+                          value={leg.gameStartTime}
+                          onChange={(e) => updateParlayLeg(leg.id, { gameStartTime: e.target.value })}
+                          min={new Date().toISOString().slice(0, 16)}
+                          className="w-full px-3 py-2 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all text-sm"
+                        />
+                      </div>
+                    </div>
+                  ))}
+
+                  {parlayLegs.length < 2 && (
+                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
+                      <p className="text-yellow-400 text-sm">
+                        ⚠️ Parlay must have at least 2 legs. Add another leg to continue.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Units and Amount for Parlay */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-800">
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+                      Units Risked *
+                    </label>
+                    <input
+                      type="number"
+                      name="unitsRisked"
+                      value={formData.unitsRisked}
+                      onChange={handleChange}
+                      required
+                      min="0"
+                      step="0.01"
+                      className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600"
+                      placeholder="2.0"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+                      Amount Risked ($)
+                    </label>
+                    <input
+                      type="number"
+                      name="amountRisked"
+                      value={formData.amountRisked}
+                      onChange={handleChange}
+                      min="0"
+                      step="0.01"
+                      className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600"
+                      placeholder="Auto-calculated"
+                    />
+                    <p className="text-xs text-gray-500">Auto-syncs with units</p>
+                  </div>
+                </div>
+
+                {/* Unit Value Display */}
+                <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-300">Unit Value:</span>
+                    <span className="text-sm font-semibold text-white">${unitValueDefault} per unit</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Change this in your <Link href="/creator/dashboard/settings" className="text-primary-400 hover:text-primary-300">settings</Link>
+                  </p>
+                </div>
+
+                {/* Write-up */}
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+                    Write-up (Optional)
+                  </label>
+                  <textarea
+                    name="writeUp"
+                    value={formData.writeUp}
+                    onChange={handleChange}
+                    rows={6}
+                    className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all resize-none placeholder:text-gray-600"
+                    placeholder="Detailed analysis and reasoning for your parlay..."
+                  />
+                </div>
+
+                {/* Legacy fields */}
+                <div className="flex items-center space-x-3 pt-4 border-t border-slate-800">
+                  <input
+                    type="checkbox"
+                    name="isFree"
+                    checked={formData.isFree}
+                    onChange={handleChange}
+                    className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-primary-600 focus:ring-primary-500"
+                  />
+                  <label className="text-sm font-medium text-gray-300">
+                    This is a free pick
+                  </label>
+                </div>
+
+                {!formData.isFree && (
+                  <>
+                    {plans.length > 0 && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                          Available for Plans
+                        </label>
+                        <div className="space-y-2 bg-slate-800/50 rounded-lg p-4 max-h-48 overflow-y-auto">
+                          {plans.map((plan) => (
+                            <label key={plan._id} className="flex items-center space-x-3 cursor-pointer hover:bg-slate-700/50 p-2 rounded">
+                              <input
+                                type="checkbox"
+                                checked={formData.plans.includes(plan._id)}
+                                onChange={() => handlePlanToggle(plan._id)}
+                                className="w-5 h-5 rounded bg-slate-600 border-slate-500 text-primary-600 focus:ring-primary-500"
+                              />
+                              <span className="text-white">{plan.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        One-Time Purchase Price ($)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        name="oneOffPriceCents"
+                        value={formData.oneOffPriceCents / 100}
+                        onChange={handleChange}
+                        className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
             {/* Sport and League */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
@@ -1058,6 +1621,8 @@ export default function NewPickPage() {
                 Cancel
               </Link>
             </div>
+              </>
+            )}
           </form>
         </div>
 
@@ -1066,58 +1631,110 @@ export default function NewPickPage() {
           <div className="bg-black/40 backdrop-blur-sm rounded-xl border border-slate-800 p-6 shadow-lg shadow-black/20 sticky top-8">
             <h3 className="text-lg font-semibold text-white mb-4">Preview</h3>
             
-            {formData.selection && formData.sport && (
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-400">Pick Type</p>
-                  <p className="text-white font-medium capitalize">{formData.pickType}</p>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-gray-400">Selection</p>
-                  <p className="text-white font-medium">
-                    {formData.selectedTeam && `${formData.selectedTeam} `}
-                    {formData.selectedPlayer && `${formData.selectedPlayer} `}
-                    {formData.selection}
-                  </p>
-                </div>
-                
-                {formData.oddsAmerican && (
-                  <div>
-                    <p className="text-sm text-gray-400">Odds</p>
-                    <p className="text-white font-medium">{formData.oddsAmerican}</p>
-                    {oddsValidation && (
-                      <p className={`text-xs mt-1 ${oddsValidation.valid ? 'text-green-400' : 'text-red-400'}`}>
-                        {oddsValidation.message}
+            {formData.pickType === 'parlay' ? (
+              <>
+                {parlayLegs.length >= 2 && calculatedParlayOdds && (
+                  <div className="space-y-4">
+                    <div className="bg-gradient-to-r from-primary-600/20 to-primary-700/20 rounded-lg border border-primary-500/50 p-4">
+                      <p className="text-xs text-gray-400 mb-1">Parlay Odds</p>
+                      <p className="text-2xl font-bold text-white">
+                        {calculatedParlayOdds.oddsAmerican > 0 ? '+' : ''}
+                        {calculatedParlayOdds.oddsAmerican}
                       </p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {parlayLegs.length} leg{parlayLegs.length !== 1 ? 's' : ''}
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <p className="text-sm text-gray-400 mb-2">Legs</p>
+                      <div className="space-y-2">
+                        {parlayLegs.map((leg, idx) => (
+                          <div key={leg.id} className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+                            <p className="text-xs text-gray-500 mb-1">Leg {idx + 1}</p>
+                            <p className="text-white text-sm font-medium">
+                              {leg.selection || 'Not set'}
+                            </p>
+                            {leg.oddsAmerican && (
+                              <p className="text-xs text-gray-400 mt-1">
+                                Odds: {leg.oddsAmerican}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    {formData.unitsRisked && (
+                      <div>
+                        <p className="text-sm text-gray-400">Units Risked</p>
+                        <p className="text-white font-medium">{formData.unitsRisked} units</p>
+                        <p className="text-xs text-gray-500">≈ ${estimatedAmount}</p>
+                      </div>
                     )}
                   </div>
                 )}
                 
-                {formData.unitsRisked && (
-                  <div>
-                    <p className="text-sm text-gray-400">Units Risked</p>
-                    <p className="text-white font-medium">{formData.unitsRisked} units</p>
-                    <p className="text-xs text-gray-500">≈ ${estimatedAmount}</p>
-                  </div>
+                {parlayLegs.length < 2 && (
+                  <p className="text-gray-500 text-sm">Add at least 2 legs to see preview</p>
                 )}
-                
-                {formData.gameStartTime && (
-                  <div>
-                    <p className="text-sm text-gray-400">Posted</p>
-                    <p className={`text-sm font-medium ${isVerified ? 'text-green-400' : 'text-red-400'}`}>
-                      {timeBeforeStart}
-                    </p>
-                    {isVerified && (
-                      <p className="text-xs text-green-400 mt-1">✓ Eligible for verification</p>
+              </>
+            ) : (
+              <>
+                {formData.selection && formData.sport && (
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm text-gray-400">Pick Type</p>
+                      <p className="text-white font-medium capitalize">{formData.pickType}</p>
+                    </div>
+                    
+                    <div>
+                      <p className="text-sm text-gray-400">Selection</p>
+                      <p className="text-white font-medium">
+                        {formData.selectedTeam && `${formData.selectedTeam} `}
+                        {formData.selectedPlayer && `${formData.selectedPlayer} `}
+                        {formData.selection}
+                      </p>
+                    </div>
+                    
+                    {formData.oddsAmerican && (
+                      <div>
+                        <p className="text-sm text-gray-400">Odds</p>
+                        <p className="text-white font-medium">{formData.oddsAmerican}</p>
+                        {oddsValidation && (
+                          <p className={`text-xs mt-1 ${oddsValidation.valid ? 'text-green-400' : 'text-red-400'}`}>
+                            {oddsValidation.message}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                    
+                    {formData.unitsRisked && (
+                      <div>
+                        <p className="text-sm text-gray-400">Units Risked</p>
+                        <p className="text-white font-medium">{formData.unitsRisked} units</p>
+                        <p className="text-xs text-gray-500">≈ ${estimatedAmount}</p>
+                      </div>
+                    )}
+                    
+                    {formData.gameStartTime && (
+                      <div>
+                        <p className="text-sm text-gray-400">Posted</p>
+                        <p className={`text-sm font-medium ${isVerified ? 'text-green-400' : 'text-red-400'}`}>
+                          {timeBeforeStart}
+                        </p>
+                        {isVerified && (
+                          <p className="text-xs text-green-400 mt-1">✓ Eligible for verification</p>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
-              </div>
-            )}
-            
-            {(!formData.selection || !formData.sport) && (
-              <p className="text-gray-500 text-sm">Fill in the form to see preview</p>
+                
+                {(!formData.selection || !formData.sport) && (
+                  <p className="text-gray-500 text-sm">Fill in the form to see preview</p>
+                )}
+              </>
             )}
           </div>
         </div>
