@@ -1,6 +1,6 @@
 const express = require('express');
 const Game = require('../models/Game');
-const { searchGames, transformGameToCanonical } = require('../services/sportsApi');
+const { searchGames, transformGameToCanonical, getGameOdds, getGameTeams, getGamePlayers } = require('../services/sportsApi');
 const auth = require('../middleware/auth');
 
 const router = express.Router();
@@ -61,6 +61,37 @@ router.get('/', async (req, res) => {
   }
 });
 
+// @route   GET /api/games/leagues/:sport
+// @desc    Get available leagues for a sport
+// @access  Public
+router.get('/leagues/:sport', async (req, res) => {
+  try {
+    const { sport } = req.params;
+    
+    // Common leagues by sport
+    const leaguesBySport = {
+      'Football': ['NFL', 'CFB', 'XFL', 'USFL'],
+      'College Football': ['CFB', 'FBS', 'FCS'],
+      'Basketball': ['NBA', 'NCAA', 'WNBA', 'G League'],
+      'Baseball': ['MLB', 'MiLB', 'NPB'],
+      'Hockey': ['NHL', 'AHL', 'NCAA'],
+      'Soccer': ['MLS', 'EPL', 'La Liga', 'Serie A', 'Bundesliga', 'Ligue 1', 'Champions League', 'World Cup'],
+      'Tennis': ['ATP', 'WTA', 'Grand Slam'],
+      'Golf': ['PGA', 'LPGA', 'European Tour', 'Masters', 'US Open', 'PGA Championship', 'Open Championship'],
+      'MMA': ['UFC', 'Bellator', 'ONE Championship'],
+      'Boxing': ['Professional', 'Amateur'],
+      'Racing': ['NASCAR', 'F1', 'IndyCar', 'MotoGP']
+    };
+    
+    const leagues = leaguesBySport[sport] || [];
+    
+    res.json(leagues);
+  } catch (error) {
+    console.error('Get leagues error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
 // @route   GET /api/games/:gameId
 // @desc    Get game details by gameId
 // @access  Public
@@ -98,5 +129,53 @@ router.get('/:gameId', async (req, res) => {
   }
 });
 
-module.exports = router;
+// @route   GET /api/games/:gameId/odds
+// @desc    Get odds for a specific game and bet type
+// @access  Public
+router.get('/:gameId/odds', async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const { betType } = req.query; // moneyline, spread, total, prop
+    
+    const odds = await getGameOdds(gameId, betType);
+    
+    res.json(odds);
+  } catch (error) {
+    console.error('Get game odds error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
 
+// @route   GET /api/games/:gameId/teams
+// @desc    Get teams for a specific game
+// @access  Public
+router.get('/:gameId/teams', async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    
+    const teams = await getGameTeams(gameId);
+    
+    res.json(teams);
+  } catch (error) {
+    console.error('Get game teams error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// @route   GET /api/games/:gameId/players
+// @desc    Get players for a specific game (for props)
+// @access  Public
+router.get('/:gameId/players', async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    
+    const players = await getGamePlayers(gameId);
+    
+    res.json(players);
+  } catch (error) {
+    console.error('Get game players error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+module.exports = router;

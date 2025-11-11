@@ -13,6 +13,7 @@
  */
 
 const axios = require('axios');
+const Game = require('../models/Game');
 
 // Configuration from environment variables
 const SPORTS_API_PROVIDER = process.env.SPORTS_API_PROVIDER || 'none'; // 'sportsdataio', 'theoddsapi', 'sportradar', etc.
@@ -212,6 +213,88 @@ function generateCanonicalGameId(providerGame, provider) {
   return `${provider}_${sport}_${league}_${date}_${home}_${away}`;
 }
 
+/**
+ * Get odds for a specific game and bet type
+ * @param {String} gameId - The canonical game ID
+ * @param {String} betType - The bet type (moneyline, spread, total, prop)
+ * @returns {Promise<Object>} Odds object with available lines
+ */
+async function getGameOdds(gameId, betType) {
+  if (!SPORTS_API_KEY || SPORTS_API_PROVIDER === 'none') {
+    // Return empty odds if API not configured
+    return { odds: [], message: 'Odds API not configured' };
+  }
+  
+  try {
+    // TODO: Implement actual API call to fetch odds
+    // This would fetch current odds from the sports API provider
+    // For now, return empty array
+    return { odds: [], message: 'Odds API not yet implemented' };
+  } catch (error) {
+    console.error('Error fetching game odds:', error);
+    return { odds: [], error: error.message };
+  }
+}
+
+/**
+ * Get teams for a specific game
+ * @param {String} gameId - The canonical game ID
+ * @returns {Promise<Array>} Array of team objects
+ */
+async function getGameTeams(gameId) {
+  try {
+    const game = await Game.findOne({ gameId });
+    if (!game) {
+      return [];
+    }
+    
+    const teams = [];
+    if (game.homeTeam) {
+      teams.push({
+        id: game.homeTeam.id || game.homeTeam.name,
+        name: game.homeTeam.name,
+        abbreviation: game.homeTeam.abbreviation,
+        logo: game.homeTeam.logo
+      });
+    }
+    if (game.awayTeam) {
+      teams.push({
+        id: game.awayTeam.id || game.awayTeam.name,
+        name: game.awayTeam.name,
+        abbreviation: game.awayTeam.abbreviation,
+        logo: game.awayTeam.logo
+      });
+    }
+    
+    return teams;
+  } catch (error) {
+    console.error('Error fetching game teams:', error);
+    return [];
+  }
+}
+
+/**
+ * Get players for a specific game (for props)
+ * @param {String} gameId - The canonical game ID
+ * @returns {Promise<Array>} Array of player objects
+ */
+async function getGamePlayers(gameId) {
+  if (!SPORTS_API_KEY || SPORTS_API_PROVIDER === 'none') {
+    // Return empty players if API not configured
+    return [];
+  }
+  
+  try {
+    // TODO: Implement actual API call to fetch players
+    // This would fetch player rosters from the sports API provider
+    // For now, return empty array
+    return [];
+  } catch (error) {
+    console.error('Error fetching game players:', error);
+    return [];
+  }
+}
+
 module.exports = {
   searchGames,
   getGameById,
@@ -219,6 +302,9 @@ module.exports = {
   getClosingLines,
   getFinishedGames,
   transformGameToCanonical,
-  generateCanonicalGameId
+  generateCanonicalGameId,
+  getGameOdds,
+  getGameTeams,
+  getGamePlayers
 };
 
