@@ -1721,7 +1721,7 @@ export default function NewPickPage() {
                                     )}
                                     {leg.oddsAmerican && (
                                       <span className="text-xs font-medium text-primary-400">
-                                        {leg.oddsAmerican > 0 ? '+' : ''}{leg.oddsAmerican}
+                                        {!isNaN(parseInt(leg.oddsAmerican)) && parseInt(leg.oddsAmerican) > 0 ? '+' : ''}{leg.oddsAmerican}
                                       </span>
                                     )}
                                   </div>
