@@ -531,7 +531,7 @@ router.post('/picks', async (req, res) => {
       return res.status(400).json({ message: 'Invalid American odds' });
     }
 
-    const oddsDecimal = americanToDecimal(oddsAmerican);
+    const finalOddsDecimal = oddsDecimal || americanToDecimal(oddsAmerican);
 
     // Calculate amount risked if not provided
     const finalAmountRisked = amountRisked || Math.round(unitsRisked * unitValueAtPost);
@@ -573,7 +573,7 @@ router.post('/picks', async (req, res) => {
       selection,
       betType,
       oddsAmerican,
-      oddsDecimal,
+      oddsDecimal: finalOddsDecimal,
       unitsRisked,
       amountRisked: finalAmountRisked,
       unitValueAtPost,
