@@ -859,27 +859,37 @@ export default function NewPickPage() {
             {/* Parlay Form */}
             {formData.pickType === 'parlay' ? (
               <>
-                {/* Parlay Odds Display */}
+                {/* Parlay Odds Display - FanDuel Style */}
                 {parlayLegs.length >= 2 && calculatedParlayOdds && (
-                  <div className="bg-gradient-to-r from-primary-600/20 to-primary-700/20 rounded-xl border-2 border-primary-500/50 p-6">
-                    <div className="flex items-center justify-between">
+                  <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 rounded-xl border-2 border-primary-500/50 p-6 shadow-lg shadow-primary-500/10">
+                    <div className="flex items-center justify-between mb-4">
                       <div>
-                        <p className="text-sm text-gray-400 mb-1">Combined Parlay Odds</p>
-                        <p className="text-3xl font-bold text-white">
+                        <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">Same Game Parlay</p>
+                        <p className="text-4xl font-extrabold text-white mb-1">
                           {calculatedParlayOdds.oddsAmerican > 0 ? '+' : ''}
                           {calculatedParlayOdds.oddsAmerican}
                         </p>
-                        <p className="text-xs text-gray-400 mt-1">
+                        <p className="text-xs text-gray-400">
                           {parlayLegs.length} leg{parlayLegs.length !== 1 ? 's' : ''}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm text-gray-400 mb-1">Decimal Odds</p>
-                        <p className="text-2xl font-semibold text-primary-400">
+                        <p className="text-xs text-gray-400 mb-1">Decimal</p>
+                        <p className="text-xl font-bold text-primary-400">
                           {calculatedParlayOdds.oddsDecimal.toFixed(4)}
                         </p>
                       </div>
                     </div>
+                    {formData.unitsRisked && (
+                      <div className="pt-4 border-t border-slate-700">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-gray-400">Total Wager</span>
+                          <span className="text-sm font-semibold text-white">
+                            {formData.unitsRisked} unit{parseFloat(formData.unitsRisked) !== 1 ? 's' : ''} (${estimatedAmount})
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -902,9 +912,21 @@ export default function NewPickPage() {
                   </div>
 
                   {parlayLegs.map((leg, index) => (
-                    <div key={leg.id} className="bg-slate-900/50 rounded-lg border border-slate-700 p-6 space-y-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h4 className="text-lg font-semibold text-white">Leg {index + 1}</h4>
+                    <div key={leg.id} className="bg-slate-900/50 rounded-xl border-2 border-slate-700 p-5 space-y-4 hover:border-primary-500/50 transition-all">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-primary-600/20 border-2 border-primary-500/50 flex items-center justify-center">
+                            <span className="text-primary-400 font-bold text-sm">{index + 1}</span>
+                          </div>
+                          <div>
+                            <h4 className="text-base font-semibold text-white">Leg {index + 1}</h4>
+                            {leg.selection && leg.oddsAmerican && (
+                              <p className="text-xs text-gray-400 mt-0.5">
+                                {leg.selection} • {leg.oddsAmerican > 0 ? '+' : ''}{leg.oddsAmerican}
+                              </p>
+                            )}
+                          </div>
+                        </div>
                         {parlayLegs.length > 2 && (
                           <button
                             type="button"
@@ -915,6 +937,9 @@ export default function NewPickPage() {
                           </button>
                         )}
                       </div>
+                      
+                      {/* Visual separator */}
+                      <div className="h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent"></div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Sport */}
@@ -1028,28 +1053,56 @@ export default function NewPickPage() {
                         )}
                       </div>
 
-                      {/* Selection and Odds */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="text-xs font-medium text-gray-400">Selection *</label>
-                          <input
-                            type="text"
-                            value={leg.selection}
-                            onChange={(e) => updateParlayLeg(leg.id, { selection: e.target.value })}
-                            className="w-full px-3 py-2 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600 text-sm"
-                            placeholder="e.g., Lakers -5.5"
-                          />
+                      {/* Selection and Odds - Prominent Display */}
+                      <div className="bg-black/40 rounded-lg p-4 border border-slate-700">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-gray-300 uppercase tracking-wide">Selection *</label>
+                            <input
+                              type="text"
+                              value={leg.selection}
+                              onChange={(e) => updateParlayLeg(leg.id, { selection: e.target.value })}
+                              className="w-full px-4 py-3 bg-black/60 border-2 border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all placeholder:text-gray-500 text-sm font-medium"
+                              placeholder="e.g., J.J. McCarthy 20+ Yards"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-xs font-semibold text-gray-300 uppercase tracking-wide">Odds (American) *</label>
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={leg.oddsAmerican}
+                                onChange={(e) => updateParlayLeg(leg.id, { oddsAmerican: e.target.value })}
+                                className="flex-1 px-4 py-3 bg-black/60 border-2 border-slate-600 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all placeholder:text-gray-500 text-sm font-medium"
+                                placeholder="-110, +135"
+                              />
+                              {leg.oddsAmerican && !isNaN(parseInt(leg.oddsAmerican)) && (
+                                <div className="px-3 py-3 bg-primary-600/20 border border-primary-500/50 rounded-lg">
+                                  <span className="text-primary-400 font-bold text-sm">
+                                    {parseInt(leg.oddsAmerican) > 0 ? '+' : ''}{leg.oddsAmerican}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <label className="text-xs font-medium text-gray-400">Odds (American) *</label>
-                          <input
-                            type="text"
-                            value={leg.oddsAmerican}
-                            onChange={(e) => updateParlayLeg(leg.id, { oddsAmerican: e.target.value })}
-                            className="w-full px-3 py-2 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600 text-sm"
-                            placeholder="-110, +135"
-                          />
-                        </div>
+                        
+                        {/* Bet Type Badge */}
+                        {leg.betType && (
+                          <div className="mt-3">
+                            <span className="inline-block px-3 py-1 bg-slate-800/50 text-gray-300 text-xs font-medium rounded-full border border-slate-600">
+                              {leg.betType === 'moneyline' ? 'Moneyline' :
+                               leg.betType === 'spread' ? 'Spread' :
+                               leg.betType === 'total' ? 'Total' :
+                               leg.betType === 'prop' ? 'Prop' : 'Other'}
+                            </span>
+                            {leg.selectedGame && (
+                              <span className="ml-2 inline-block px-3 py-1 bg-slate-800/50 text-gray-300 text-xs font-medium rounded-full border border-slate-600">
+                                {leg.selectedGame.awayTeam?.name || 'Away'} @ {leg.selectedGame.homeTeam?.name || 'Home'}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       {/* Game Start Time */}
@@ -1647,19 +1700,34 @@ export default function NewPickPage() {
                     </div>
                     
                     <div>
-                      <p className="text-sm text-gray-400 mb-2">Legs</p>
-                      <div className="space-y-2">
+                      <p className="text-sm text-gray-400 mb-3 font-semibold">Parlay Legs</p>
+                      <div className="space-y-3">
                         {parlayLegs.map((leg, idx) => (
-                          <div key={leg.id} className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
-                            <p className="text-xs text-gray-500 mb-1">Leg {idx + 1}</p>
-                            <p className="text-white text-sm font-medium">
-                              {leg.selection || 'Not set'}
-                            </p>
-                            {leg.oddsAmerican && (
-                              <p className="text-xs text-gray-400 mt-1">
-                                Odds: {leg.oddsAmerican}
-                              </p>
-                            )}
+                          <div key={leg.id} className="bg-slate-800/70 rounded-lg p-4 border border-slate-600">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start gap-3 flex-1">
+                                <div className="w-6 h-6 rounded-full bg-primary-600/30 border border-primary-500/50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                  <span className="text-primary-400 font-bold text-xs">{idx + 1}</span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-white text-sm font-semibold mb-1">
+                                    {leg.selection || 'Not set'}
+                                  </p>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    {leg.betType && (
+                                      <span className="text-xs text-gray-400 bg-slate-700/50 px-2 py-0.5 rounded">
+                                        {leg.betType}
+                                      </span>
+                                    )}
+                                    {leg.oddsAmerican && (
+                                      <span className="text-xs font-medium text-primary-400">
+                                        {leg.oddsAmerican > 0 ? '+' : ''}{leg.oddsAmerican}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         ))}
                       </div>
