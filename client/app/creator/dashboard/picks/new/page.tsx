@@ -922,7 +922,7 @@ export default function NewPickPage() {
                             <h4 className="text-base font-semibold text-white">Leg {index + 1}</h4>
                             {leg.selection && leg.oddsAmerican && (
                               <p className="text-xs text-gray-400 mt-0.5">
-                                {leg.selection} • {leg.oddsAmerican > 0 ? '+' : ''}{leg.oddsAmerican}
+                                {leg.selection} • {!isNaN(parseInt(leg.oddsAmerican)) && parseInt(leg.oddsAmerican) > 0 ? '+' : ''}{leg.oddsAmerican}
                               </p>
                             )}
                           </div>
