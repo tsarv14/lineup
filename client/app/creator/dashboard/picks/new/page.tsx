@@ -556,7 +556,7 @@ export default function NewPickPage() {
   const estimatedAmount = formData.unitsRisked ? (parseFloat(formData.unitsRisked) * unitValueDefault).toFixed(2) : '0.00'
   const isFuture = formData.betType === 'future'
   const isProp = formData.betType === 'prop'
-  const showTeamSelection = !isFuture && formData.betType !== 'parlay' && teams.length > 0
+  const showTeamSelection = !isFuture && formData.pickType !== 'parlay' && teams.length > 0
   const showPlayerSelection = isProp && players.length > 0
 
   if (fetchingUnitValue) {
