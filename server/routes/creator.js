@@ -356,27 +356,62 @@ router.post('/picks', async (req, res) => {
       }
 
       const finalOddsDecimal = oddsDecimal || americanToDecimal(parsedOddsAmerican);
+      if (isNaN(finalOddsDecimal) || finalOddsDecimal <= 0) {
+        return res.status(400).json({ message: 'Invalid calculated parlay odds decimal' });
+      }
+
       const parsedUnitsRisked = typeof unitsRisked === 'string' ? parseFloat(unitsRisked) : unitsRisked;
+      if (isNaN(parsedUnitsRisked) || parsedUnitsRisked <= 0) {
+        return res.status(400).json({ message: 'Invalid units risked. Must be a positive number.' });
+      }
+
       const parsedAmountRisked = amountRisked ? (typeof amountRisked === 'string' ? parseFloat(amountRisked) : amountRisked) : null;
+      if (parsedAmountRisked !== null && (isNaN(parsedAmountRisked) || parsedAmountRisked < 0)) {
+        return res.status(400).json({ message: 'Invalid amount risked. Must be a positive number.' });
+      }
+
       const finalAmountRisked = parsedAmountRisked || Math.round(parsedUnitsRisked * unitValueAtPost);
+      if (finalAmountRisked <= 0) {
+        return res.status(400).json({ message: 'Calculated amount risked must be positive' });
+      }
 
       // Determine verification status
       const isVerified = now < gameStart;
       const verificationSource = isVerified ? 'system' : 'manual';
 
         // Build parlay legs data
-        const parlayLegsData = parlayLegs.map(leg => {
+        const parlayLegsData = parlayLegs.map((leg, index) => {
+          // Validate each leg has all required fields
+          if (!leg.sport || !leg.betType || !leg.selection || leg.oddsAmerican === undefined || leg.oddsAmerican === null || !leg.gameStartTime) {
+            throw new Error(`Leg ${index + 1} is missing required fields: sport, betType, selection, oddsAmerican, or gameStartTime`);
+          }
+
           const legGameStart = new Date(leg.gameStartTime);
+          if (isNaN(legGameStart.getTime())) {
+            throw new Error(`Leg ${index + 1} has invalid gameStartTime: ${leg.gameStartTime}`);
+          }
+
           const legOddsAmerican = typeof leg.oddsAmerican === 'string' ? parseInt(leg.oddsAmerican) : leg.oddsAmerican;
+          if (isNaN(legOddsAmerican)) {
+            throw new Error(`Leg ${index + 1} has invalid oddsAmerican: ${leg.oddsAmerican}`);
+          }
+
+          if (!isValidAmericanOdds(legOddsAmerican)) {
+            throw new Error(`Leg ${index + 1} has invalid American odds: ${legOddsAmerican}`);
+          }
+
           const legOddsDecimal = leg.oddsDecimal || americanToDecimal(legOddsAmerican);
+          if (isNaN(legOddsDecimal) || legOddsDecimal <= 0) {
+            throw new Error(`Leg ${index + 1} has invalid calculated oddsDecimal: ${legOddsDecimal}`);
+          }
           
           return {
-            sport: leg.sport,
-            league: leg.league,
-            gameId: leg.gameId || null,
-            gameText: leg.gameText || null,
-            betType: leg.betType,
-            selection: leg.selection,
+            sport: String(leg.sport).trim(),
+            league: leg.league ? String(leg.league).trim() : undefined,
+            gameId: leg.gameId ? String(leg.gameId).trim() : undefined,
+            gameText: leg.gameText ? String(leg.gameText).trim() : undefined,
+            betType: String(leg.betType),
+            selection: String(leg.selection).trim(),
             oddsAmerican: legOddsAmerican,
             oddsDecimal: legOddsDecimal,
             gameStartTime: legGameStart,
@@ -424,19 +459,54 @@ router.post('/picks', async (req, res) => {
         pickData.publishedAt = new Date();
       }
 
+      // Validate all required fields are present
+      if (!pickData.creator || !pickData.storefront || !pickData.sport || !pickData.selection || 
+          !pickData.betType || !pickData.oddsAmerican || !pickData.oddsDecimal || 
+          !pickData.unitsRisked || !pickData.amountRisked || !pickData.unitValueAtPost || 
+          !pickData.gameStartTime) {
+        console.error('Missing required fields:', {
+          hasCreator: !!pickData.creator,
+          hasStorefront: !!pickData.storefront,
+          hasSport: !!pickData.sport,
+          hasSelection: !!pickData.selection,
+          hasBetType: !!pickData.betType,
+          hasOddsAmerican: pickData.oddsAmerican !== undefined,
+          hasOddsDecimal: pickData.oddsDecimal !== undefined,
+          hasUnitsRisked: pickData.unitsRisked !== undefined,
+          hasAmountRisked: pickData.amountRisked !== undefined,
+          hasUnitValueAtPost: pickData.unitValueAtPost !== undefined,
+          hasGameStartTime: !!pickData.gameStartTime
+        });
+        return res.status(400).json({ message: 'Missing required fields for pick creation' });
+      }
+
       const pick = new Pick(pickData);
       
       // Validate before saving
       const validationError = pick.validateSync();
       if (validationError) {
         console.error('Pick validation error:', validationError);
+        const errorMessages = {};
+        Object.keys(validationError.errors || {}).forEach(key => {
+          errorMessages[key] = validationError.errors[key].message;
+        });
         return res.status(400).json({ 
           message: 'Validation error', 
-          errors: validationError.errors 
+          errors: errorMessages,
+          fullError: process.env.NODE_ENV === 'development' ? validationError : undefined
         });
       }
       
-      await pick.save();
+      try {
+        await pick.save();
+      } catch (saveError) {
+        console.error('Pick save error:', saveError);
+        return res.status(500).json({ 
+          message: 'Failed to save pick', 
+          error: saveError.message,
+          stack: process.env.NODE_ENV === 'development' ? saveError.stack : undefined
+        });
+      }
 
       // Phase D: Create immutable ledger entry
       try {
