@@ -356,7 +356,9 @@ router.post('/picks', async (req, res) => {
       }
 
       const finalOddsDecimal = oddsDecimal || americanToDecimal(parsedOddsAmerican);
-      const finalAmountRisked = amountRisked || Math.round(unitsRisked * unitValueAtPost);
+      const parsedUnitsRisked = typeof unitsRisked === 'string' ? parseFloat(unitsRisked) : unitsRisked;
+      const parsedAmountRisked = amountRisked ? (typeof amountRisked === 'string' ? parseFloat(amountRisked) : amountRisked) : null;
+      const finalAmountRisked = parsedAmountRisked || Math.round(parsedUnitsRisked * unitValueAtPost);
 
       // Determine verification status
       const isVerified = now < gameStart;
@@ -391,7 +393,7 @@ router.post('/picks', async (req, res) => {
         selection: `Parlay (${parlayLegs.length} legs)`,
         oddsAmerican: parsedOddsAmerican,
         oddsDecimal: finalOddsDecimal,
-        unitsRisked,
+        unitsRisked: parsedUnitsRisked,
         amountRisked: finalAmountRisked,
         unitValueAtPost,
         gameStartTime: gameStart,
@@ -407,8 +409,8 @@ router.post('/picks', async (req, res) => {
         title: title || `Parlay (${parlayLegs.length} legs)`,
         description: writeUp || description || null,
         marketType: 'parlay',
-        odds: odds || oddsAmerican.toString(),
-        stake: stake || `${unitsRisked} unit${unitsRisked !== 1 ? 's' : ''}`,
+        odds: odds || parsedOddsAmerican.toString(),
+        stake: stake || `${parsedUnitsRisked} unit${parsedUnitsRisked !== 1 ? 's' : ''}`,
         isFree: isFree || false,
         plans: plans || [],
         oneOffPriceCents: oneOffPriceCents || 0,
@@ -423,6 +425,17 @@ router.post('/picks', async (req, res) => {
       }
 
       const pick = new Pick(pickData);
+      
+      // Validate before saving
+      const validationError = pick.validateSync();
+      if (validationError) {
+        console.error('Pick validation error:', validationError);
+        return res.status(400).json({ 
+          message: 'Validation error', 
+          errors: validationError.errors 
+        });
+      }
+      
       await pick.save();
 
       // Phase D: Create immutable ledger entry
@@ -478,7 +491,7 @@ router.post('/picks', async (req, res) => {
           sport: primarySport,
           betType: 'parlay',
           selection: `Parlay (${parlayLegs.length} legs)`,
-          unitsRisked,
+          unitsRisked: parsedUnitsRisked,
           isVerified,
           isParlay: true,
           legCount: parlayLegs.length
