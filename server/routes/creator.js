@@ -350,35 +350,37 @@ router.post('/picks', async (req, res) => {
 
       // Validate parlay odds
       const { americanToDecimal, isValidAmericanOdds } = require('../utils/oddsConverter');
-      if (!isValidAmericanOdds(oddsAmerican)) {
+      const parsedOddsAmerican = typeof oddsAmerican === 'string' ? parseInt(oddsAmerican) : oddsAmerican;
+      if (!isValidAmericanOdds(parsedOddsAmerican)) {
         return res.status(400).json({ message: 'Invalid parlay odds' });
       }
 
-      const finalOddsDecimal = oddsDecimal || americanToDecimal(oddsAmerican);
+      const finalOddsDecimal = oddsDecimal || americanToDecimal(parsedOddsAmerican);
       const finalAmountRisked = amountRisked || Math.round(unitsRisked * unitValueAtPost);
 
       // Determine verification status
       const isVerified = now < gameStart;
       const verificationSource = isVerified ? 'system' : 'manual';
 
-      // Build parlay legs data
-      const parlayLegsData = parlayLegs.map(leg => {
-        const legGameStart = new Date(leg.gameStartTime);
-        const legOddsDecimal = leg.oddsDecimal || americanToDecimal(leg.oddsAmerican);
-        
-        return {
-          sport: leg.sport,
-          league: leg.league,
-          gameId: leg.gameId || null,
-          gameText: leg.gameText || null,
-          betType: leg.betType,
-          selection: leg.selection,
-          oddsAmerican: leg.oddsAmerican,
-          oddsDecimal: legOddsDecimal,
-          gameStartTime: legGameStart,
-          result: 'pending'
-        };
-      });
+        // Build parlay legs data
+        const parlayLegsData = parlayLegs.map(leg => {
+          const legGameStart = new Date(leg.gameStartTime);
+          const legOddsAmerican = typeof leg.oddsAmerican === 'string' ? parseInt(leg.oddsAmerican) : leg.oddsAmerican;
+          const legOddsDecimal = leg.oddsDecimal || americanToDecimal(legOddsAmerican);
+          
+          return {
+            sport: leg.sport,
+            league: leg.league,
+            gameId: leg.gameId || null,
+            gameText: leg.gameText || null,
+            betType: leg.betType,
+            selection: leg.selection,
+            oddsAmerican: legOddsAmerican,
+            oddsDecimal: legOddsDecimal,
+            gameStartTime: legGameStart,
+            result: 'pending'
+          };
+        });
 
       const pickData = {
         creator: req.user._id,
@@ -387,7 +389,7 @@ router.post('/picks', async (req, res) => {
         league: primaryLeague,
         betType: 'parlay',
         selection: `Parlay (${parlayLegs.length} legs)`,
-        oddsAmerican,
+        oddsAmerican: parsedOddsAmerican,
         oddsDecimal: finalOddsDecimal,
         unitsRisked,
         amountRisked: finalAmountRisked,
@@ -527,11 +529,12 @@ router.post('/picks', async (req, res) => {
 
     // Validate American odds
     const { americanToDecimal, isValidAmericanOdds } = require('../utils/oddsConverter');
-    if (!isValidAmericanOdds(oddsAmerican)) {
+    const parsedOddsAmerican = typeof oddsAmerican === 'string' ? parseInt(oddsAmerican) : oddsAmerican;
+    if (!isValidAmericanOdds(parsedOddsAmerican)) {
       return res.status(400).json({ message: 'Invalid American odds' });
     }
 
-    const finalOddsDecimal = oddsDecimal || americanToDecimal(oddsAmerican);
+    const finalOddsDecimal = oddsDecimal || americanToDecimal(parsedOddsAmerican);
 
     // Calculate amount risked if not provided
     const finalAmountRisked = amountRisked || Math.round(unitsRisked * unitValueAtPost);
@@ -572,7 +575,7 @@ router.post('/picks', async (req, res) => {
       gameText: gameText || null,
       selection,
       betType,
-      oddsAmerican,
+      oddsAmerican: parsedOddsAmerican,
       oddsDecimal: finalOddsDecimal,
       unitsRisked,
       amountRisked: finalAmountRisked,
@@ -593,7 +596,7 @@ router.post('/picks', async (req, res) => {
       title: title || `${selection} (${sport})`,
       description: writeUp || description || null,
       marketType: marketType || betType,
-      odds: odds || oddsAmerican.toString(),
+      odds: odds || parsedOddsAmerican.toString(),
       stake: stake || `${unitsRisked} unit${unitsRisked !== 1 ? 's' : ''}`,
       isFree: isFree || false,
       plans: plans || [],
