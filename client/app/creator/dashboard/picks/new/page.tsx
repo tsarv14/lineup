@@ -180,6 +180,7 @@ export default function NewPickPage() {
   const [gameSearchForLeg, setGameSearchForLeg] = useState<number | null>(null)
   const [legLeagues, setLegLeagues] = useState<Record<string, string[]>>({})
   const [calculatedParlayOdds, setCalculatedParlayOdds] = useState<{ oddsDecimal: number; oddsAmerican: number } | null>(null)
+  const [expandedLegs, setExpandedLegs] = useState<Set<string>>(new Set())
   
   const [formData, setFormData] = useState({
     // Pick type
@@ -453,6 +454,8 @@ export default function NewPickPage() {
           gameStartTime: ''
         }
         setParlayLegs([leg1, leg2])
+        // Expand both legs by default
+        setExpandedLegs(new Set([leg1.id, leg2.id]))
       }
     } else if (name === 'betType') {
       // Reset selection fields when bet type changes
@@ -564,10 +567,29 @@ export default function NewPickPage() {
       gameStartTime: ''
     }
     setParlayLegs([...parlayLegs, newLeg])
+    // Expand new leg by default
+    setExpandedLegs(prev => new Set([...prev, newLeg.id]))
   }
 
   const removeParlayLeg = (legId: string) => {
     setParlayLegs(parlayLegs.filter(leg => leg.id !== legId))
+    setExpandedLegs(prev => {
+      const newSet = new Set(prev)
+      newSet.delete(legId)
+      return newSet
+    })
+  }
+
+  const toggleLegExpanded = (legId: string) => {
+    setExpandedLegs(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(legId)) {
+        newSet.delete(legId)
+      } else {
+        newSet.add(legId)
+      }
+      return newSet
+    })
   }
 
   const updateParlayLeg = async (legId: string, updates: Partial<ParlayLeg>) => {
@@ -911,35 +933,73 @@ export default function NewPickPage() {
                     </button>
                   </div>
 
-                  {parlayLegs.map((leg, index) => (
-                    <div key={leg.id} className="bg-slate-900/50 rounded-xl border-2 border-slate-700 p-5 space-y-4 hover:border-primary-500/50 transition-all">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-primary-600/20 border-2 border-primary-500/50 flex items-center justify-center">
-                            <span className="text-primary-400 font-bold text-sm">{index + 1}</span>
+                  {parlayLegs.map((leg, index) => {
+                    const isExpanded = expandedLegs.has(leg.id)
+                    return (
+                    <div key={leg.id} className="bg-slate-900/50 rounded-xl border-2 border-slate-700 hover:border-primary-500/50 transition-all overflow-hidden">
+                      {/* Leg Header - Always Visible */}
+                      <div 
+                        className="p-5 cursor-pointer"
+                        onClick={() => toggleLegExpanded(leg.id)}
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3 flex-1">
+                            <div className="w-8 h-8 rounded-full bg-primary-600/20 border-2 border-primary-500/50 flex items-center justify-center flex-shrink-0">
+                              <span className="text-primary-400 font-bold text-sm">{index + 1}</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <h4 className="text-base font-semibold text-white">Leg {index + 1}</h4>
+                                {leg.selection && leg.oddsAmerican && (
+                                  <span className="text-xs text-gray-400">
+                                    • {leg.selection} ({!isNaN(parseInt(leg.oddsAmerican)) && parseInt(leg.oddsAmerican) > 0 ? '+' : ''}{leg.oddsAmerican})
+                                  </span>
+                                )}
+                              </div>
+                              {!leg.selection && (
+                                <p className="text-xs text-gray-500 mt-0.5">Click to expand and edit</p>
+                              )}
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="text-base font-semibold text-white">Leg {index + 1}</h4>
-                            {leg.selection && leg.oddsAmerican && (
-                              <p className="text-xs text-gray-400 mt-0.5">
-                                {leg.selection} • {!isNaN(parseInt(leg.oddsAmerican)) && parseInt(leg.oddsAmerican) > 0 ? '+' : ''}{leg.oddsAmerican}
-                              </p>
-                            )}
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                removeParlayLeg(leg.id)
+                              }}
+                              disabled={parlayLegs.length <= 2}
+                              className="px-3 py-1.5 bg-red-600/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-600/30 transition-all text-sm disabled:opacity-30 disabled:cursor-not-allowed"
+                              title={parlayLegs.length <= 2 ? 'Parlay must have at least 2 legs' : 'Remove leg'}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                toggleLegExpanded(leg.id)
+                              }}
+                              className="p-1.5 text-gray-400 hover:text-white transition-colors"
+                            >
+                              <svg 
+                                className={`w-5 h-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
                           </div>
                         </div>
-                        {parlayLegs.length > 2 && (
-                          <button
-                            type="button"
-                            onClick={() => removeParlayLeg(leg.id)}
-                            className="px-3 py-1.5 bg-red-600/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-600/30 transition-all text-sm"
-                          >
-                            Remove
-                          </button>
-                        )}
                       </div>
                       
-                      {/* Visual separator */}
-                      <div className="h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent"></div>
+                      {/* Expandable Content */}
+                      {isExpanded && (
+                        <div className="px-5 pb-5 space-y-4 border-t border-slate-700 pt-4">
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {/* Sport */}
@@ -1116,8 +1176,10 @@ export default function NewPickPage() {
                           className="w-full px-3 py-2 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all text-sm"
                         />
                       </div>
+                        </div>
+                      )}
                     </div>
-                  ))}
+                  )})}
 
                   {parlayLegs.length < 2 && (
                     <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4">
@@ -1245,6 +1307,35 @@ export default function NewPickPage() {
                     </div>
                   </>
                 )}
+
+                {/* Submit Button for Parlay */}
+                <div className="flex items-center gap-4 pt-6 border-t border-slate-800">
+                  <button
+                    type="submit"
+                    disabled={loading || parlayLegs.length < 2}
+                    className="px-8 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:shadow-glow hover:shadow-primary-500/30 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed border border-primary-500/50 flex items-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Post Parlay
+                      </>
+                    )}
+                  </button>
+                  <Link
+                    href="/creator/dashboard/picks"
+                    className="px-6 py-3 bg-black/60 text-white rounded-xl hover:bg-black/80 transition-all font-semibold border border-slate-700 hover:border-slate-600"
+                  >
+                    Cancel
+                  </Link>
+                </div>
               </>
             ) : (
               <>
