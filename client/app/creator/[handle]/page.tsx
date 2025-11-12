@@ -46,6 +46,19 @@ interface Plan {
   freeTrialDays: number
 }
 
+interface ParlayLeg {
+  sport: string
+  league?: string
+  gameId?: string
+  gameText?: string
+  selection: string
+  betType: string
+  oddsAmerican: number
+  oddsDecimal: number
+  gameStartTime: string
+  result?: 'pending' | 'win' | 'loss' | 'push' | 'void'
+}
+
 interface Pick {
   _id: string
   title: string
@@ -66,6 +79,10 @@ interface Pick {
   isVerified?: boolean
   verificationSource?: 'manual' | 'system' | 'api'
   gameStartTime?: string
+  // Parlay fields
+  isParlay?: boolean
+  parlayLegs?: ParlayLeg[]
+  parlayResult?: 'pending' | 'win' | 'loss' | 'push' | 'void'
 }
 
 export default function CreatorStorefront() {
@@ -198,7 +215,7 @@ export default function CreatorStorefront() {
 
   return (
     <div className="min-h-screen bg-black">
-      <Navbar />
+        <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header Section */}
@@ -277,7 +294,7 @@ export default function CreatorStorefront() {
           <div className="flex items-center gap-4 mb-6">
             <Link href={`/creator/${handle}`} className="flex items-center gap-4">
               <div className="relative w-16 h-16 rounded-full overflow-hidden">
-                {storefront.logoImage ? (
+              {storefront.logoImage ? (
                   <Image
                     src={storefront.logoImage}
                     alt="Store Logo"
@@ -286,9 +303,9 @@ export default function CreatorStorefront() {
                   />
                 ) : (
                   <div className="w-full h-full bg-primary-500 flex items-center justify-center text-white text-2xl font-bold">
-                    {storefront.displayName.charAt(0)}
-                  </div>
-                )}
+                  {storefront.displayName.charAt(0)}
+                </div>
+              )}
               </div>
               <p className="text-white text-2xl font-bold">{storefront.displayName}</p>
             </Link>
@@ -398,11 +415,11 @@ export default function CreatorStorefront() {
                           ))}
                         </select>
                       )}
-                    </div>
+      </div>
                     {plan.description && (
                       <p className="text-gray-400 text-sm mb-4">{plan.description}</p>
-                    )}
-                  </div>
+        )}
+      </div>
                   <Link
                     href={`/creator/${handle}/subscribe/${plan._id}${selectedBillingVariant ? `?pid=${selectedBillingVariant}` : ''}`}
                     className="block w-full text-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-semibold"
@@ -481,7 +498,7 @@ export default function CreatorStorefront() {
               </p>
             </div>
           </div>
-        </div>
+          </div>
 
         {/* About Us Section */}
         <div className="mb-16">
@@ -493,7 +510,7 @@ export default function CreatorStorefront() {
               </p>
             </div>
             <div className="relative w-full h-96 rounded-lg overflow-hidden">
-              {storefront.aboutImage ? (
+            {storefront.aboutImage ? (
                 <Image
                   src={storefront.aboutImage}
                   alt="about"
@@ -502,7 +519,7 @@ export default function CreatorStorefront() {
                 />
               ) : (
                 <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                  {storefront.logoImage ? (
+                {storefront.logoImage ? (
                     <Image
                       src={storefront.logoImage}
                       alt="Store Logo"
@@ -512,11 +529,11 @@ export default function CreatorStorefront() {
                     />
                   ) : (
                     <div className="text-6xl font-bold text-primary-400/20">
-                      {storefront.displayName.charAt(0)}
-                    </div>
-                  )}
-                </div>
-              )}
+                    {storefront.displayName.charAt(0)}
+                  </div>
+                )}
+              </div>
+            )}
             </div>
           </div>
         </div>
@@ -526,28 +543,28 @@ export default function CreatorStorefront() {
           <p className="text-white text-3xl font-bold mb-6">Recent Picks</p>
           
           {/* Sport Filter */}
-          <div className="flex flex-wrap gap-3 mb-8">
+            <div className="flex flex-wrap gap-3 mb-8">
             {allSports.map((sport) => (
-              <button
-                key={sport}
-                onClick={() => setSelectedSport(selectedSport === sport ? null : sport)}
+                <button
+                  key={sport}
+                  onClick={() => setSelectedSport(selectedSport === sport ? null : sport)}
                 className={`px-4 py-2 rounded-full transition-colors flex items-center gap-2 ${
-                  selectedSport === sport
+                    selectedSport === sport
                     ? 'bg-primary-600 text-white'
                     : 'bg-slate-900 border border-slate-800 text-white hover:border-primary-500'
-                }`}
-              >
+                  }`}
+                >
                 {getSportIcon(sport)}
                 <span className="text-sm font-medium">{sport}</span>
-              </button>
-            ))}
-          </div>
+                </button>
+              ))}
+            </div>
 
           {/* Picks Display */}
           {filteredPicks.length === 0 ? (
             <div className="bg-slate-900 rounded-lg border border-slate-800 p-12 min-h-[400px] flex items-center justify-center">
-              <div className="text-center">
-                <p className="text-gray-400 text-lg">No picks available yet</p>
+                <div className="text-center">
+                  <p className="text-gray-400 text-lg">No picks available yet</p>
               </div>
             </div>
           ) : (
@@ -558,6 +575,11 @@ export default function CreatorStorefront() {
                     <div className="flex-1">
                       <h3 className="text-white text-lg font-semibold">{pick.selection || pick.title}</h3>
                       <div className="flex items-center gap-2 mt-2 flex-wrap">
+                        {pick.isParlay && (
+                          <span className="px-2 py-1 bg-purple-500/20 text-purple-400 rounded text-xs font-semibold border border-purple-500/30">
+                            Parlay ({pick.parlayLegs?.length || 0} legs)
+                          </span>
+                        )}
                         {pick.isVerified && (
                           <span className="px-2 py-1 bg-green-500/20 text-green-400 rounded text-xs font-semibold border border-green-500/30 flex items-center gap-1">
                             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -566,21 +588,21 @@ export default function CreatorStorefront() {
                             Verified
                           </span>
                         )}
-                        {pick.result && pick.result !== 'pending' && (
+                        {(pick.result || pick.parlayResult) && (pick.result || pick.parlayResult) !== 'pending' && (
                           <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                            pick.result === 'win' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
-                            pick.result === 'loss' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                            (pick.result || pick.parlayResult) === 'win' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                            (pick.result || pick.parlayResult) === 'loss' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
                             'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
                           }`}>
-                            {pick.result}
+                            {pick.result || pick.parlayResult}
                           </span>
                         )}
-                        {pick.isFree ? (
+                    {pick.isFree ? (
                           <span className="px-2 py-1 bg-green-600 text-white text-xs font-semibold rounded">Free</span>
-                        ) : (
+                    ) : (
                           <span className="px-2 py-1 bg-primary-600 text-white text-xs font-semibold rounded">
-                            ${((pick.oneOffPriceCents || 0) / 100).toFixed(2)}
-                          </span>
+                        ${((pick.oneOffPriceCents || 0) / 100).toFixed(2)}
+                      </span>
                         )}
                       </div>
                     </div>
@@ -614,9 +636,27 @@ export default function CreatorStorefront() {
                   {pick.description && (
                     <p className="text-gray-400 text-sm mb-2">{pick.description}</p>
                   )}
+                  {/* Parlay Legs Display */}
+                  {pick.isParlay && pick.parlayLegs && pick.parlayLegs.length > 0 && (
+                    <div className="mt-3 p-3 bg-slate-800/50 rounded border border-slate-700">
+                      <h4 className="text-xs font-semibold text-gray-300 mb-2">Parlay Legs:</h4>
+                      <div className="space-y-1.5">
+                        {pick.parlayLegs.map((leg, idx) => (
+                          <div key={idx} className="flex items-center justify-between text-xs p-1.5 bg-slate-900/50 rounded">
+                            <span className="text-white">
+                              <span className="text-primary-400">Leg {idx + 1}:</span> {leg.selection} ({leg.sport})
+                            </span>
+                            <span className="text-gray-400">
+                              {leg.oddsAmerican > 0 ? `+${leg.oddsAmerican}` : leg.oddsAmerican}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <Link
                     href={`/creator/${handle}/pick/${pick._id}`}
-                    className="text-primary-400 hover:text-primary-300 text-sm font-semibold"
+                    className="text-primary-400 hover:text-primary-300 text-sm font-semibold mt-2 inline-block"
                   >
                     View Pick →
                   </Link>

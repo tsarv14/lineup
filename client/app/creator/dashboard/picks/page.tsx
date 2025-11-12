@@ -191,8 +191,13 @@ export default function PicksPage() {
                       <h3 className="text-xl font-bold text-white">
                         {pick.selection || pick.title}
                       </h3>
-                      <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${getResultBadge(pick.result || 'pending')}`}>
-                        {pick.result || 'pending'}
+                      {pick.isParlay && (
+                        <span className="px-2.5 py-1 bg-purple-500/20 text-purple-400 rounded-lg text-xs font-semibold border border-purple-500/30">
+                          Parlay ({pick.parlayLegs?.length || 0} legs)
+                        </span>
+                      )}
+                      <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${getResultBadge(pick.result || pick.parlayResult || 'pending')}`}>
+                        {pick.result || pick.parlayResult || 'pending'}
                       </span>
                       {pick.isVerified && (
                         <span className="px-2.5 py-1 bg-green-500/20 text-green-400 rounded-lg text-xs font-semibold border border-green-500/30 flex items-center gap-1">
@@ -275,6 +280,38 @@ export default function PicksPage() {
                     </div>
                   )}
                 </div>
+
+                {/* Parlay Legs Display */}
+                {pick.isParlay && pick.parlayLegs && pick.parlayLegs.length > 0 && (
+                  <div className="mt-4 p-4 bg-slate-900/50 rounded-lg border border-slate-700">
+                    <h4 className="text-sm font-semibold text-gray-300 mb-3">Parlay Legs:</h4>
+                    <div className="space-y-2">
+                      {pick.parlayLegs.map((leg, idx) => (
+                        <div key={idx} className="flex items-center justify-between text-sm p-2 bg-slate-800/50 rounded border border-slate-700">
+                          <div className="flex-1">
+                            <span className="text-primary-400 font-medium">Leg {idx + 1}:</span>
+                            <span className="text-white ml-2">{leg.selection}</span>
+                            <span className="text-gray-400 ml-2">({leg.sport})</span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-gray-400">
+                              {leg.oddsAmerican > 0 ? `+${leg.oddsAmerican}` : leg.oddsAmerican}
+                            </span>
+                            {leg.result && leg.result !== 'pending' && (
+                              <span className={`px-2 py-0.5 rounded text-xs ${
+                                leg.result === 'win' ? 'bg-green-500/20 text-green-400' :
+                                leg.result === 'loss' ? 'bg-red-500/20 text-red-400' :
+                                'bg-yellow-500/20 text-yellow-400'
+                              }`}>
+                                {leg.result}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
                 {/* Phase A: Verification and timing info */}
                 {pick.gameStartTime && (
