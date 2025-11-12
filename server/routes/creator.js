@@ -380,7 +380,9 @@ router.post('/picks', async (req, res) => {
       const verificationSource = isVerified ? 'system' : 'manual';
 
         // Build parlay legs data
-        const parlayLegsData = parlayLegs.map((leg, index) => {
+        let parlayLegsData;
+        try {
+          parlayLegsData = parlayLegs.map((leg, index) => {
           // Validate each leg has all required fields
           if (!leg.sport || !leg.betType || !leg.selection || leg.oddsAmerican === undefined || leg.oddsAmerican === null || !leg.gameStartTime) {
             throw new Error(`Leg ${index + 1} is missing required fields: sport, betType, selection, oddsAmerican, or gameStartTime`);
@@ -417,7 +419,14 @@ router.post('/picks', async (req, res) => {
             gameStartTime: legGameStart,
             result: 'pending'
           };
-        });
+          });
+        } catch (legError) {
+          console.error('Error processing parlay legs:', legError);
+          return res.status(400).json({ 
+            message: legError.message || 'Error processing parlay legs',
+            error: legError.message
+          });
+        }
 
       const pickData = {
         creator: req.user._id,
@@ -551,24 +560,29 @@ router.post('/picks', async (req, res) => {
       }
 
       // Create audit log
-      const AuditLog = require('../models/AuditLog');
-      await AuditLog.create({
-        userId: req.user._id,
-        action: 'pick.create',
-        resourceType: 'Pick',
-        resourceId: pick._id,
-        metadata: {
-          sport: primarySport,
-          betType: 'parlay',
-          selection: `Parlay (${parlayLegs.length} legs)`,
-          unitsRisked: parsedUnitsRisked,
-          isVerified,
-          isParlay: true,
-          legCount: parlayLegs.length
-        },
-        ipAddress: req.ip,
-        userAgent: req.get('user-agent')
-      });
+      try {
+        const AuditLog = require('../models/AuditLog');
+        await AuditLog.create({
+          userId: req.user._id,
+          action: 'pick.create',
+          resourceType: 'Pick',
+          resourceId: pick._id,
+          metadata: {
+            sport: primarySport,
+            betType: 'parlay',
+            selection: `Parlay (${parlayLegs.length} legs)`,
+            unitsRisked: parsedUnitsRisked,
+            isVerified,
+            isParlay: true,
+            legCount: parlayLegs.length
+          },
+          ipAddress: req.ip,
+          userAgent: req.get('user-agent')
+        });
+      } catch (auditError) {
+        console.error('Audit log creation error (non-critical):', auditError);
+        // Don't fail pick creation if audit log fails
+      }
 
       return res.status(201).json(pick);
     }
