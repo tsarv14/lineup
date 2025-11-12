@@ -310,16 +310,16 @@ router.post('/picks', async (req, res) => {
       // Validate all parlay legs
       for (let i = 0; i < parlayLegs.length; i++) {
         const leg = parlayLegs[i];
-        if (!leg.sport || !leg.league || !leg.betType || !leg.selection || leg.oddsAmerican === undefined || !leg.gameStartTime) {
+        if (!leg.sport || !leg.betType || !leg.selection || leg.oddsAmerican === undefined || leg.oddsAmerican === null || !leg.gameStartTime) {
           return res.status(400).json({ 
-            message: `Missing required fields for leg ${i + 1}: sport, league, betType, selection, oddsAmerican, gameStartTime` 
+            message: `Missing required fields for leg ${i + 1}: sport, betType, selection, oddsAmerican, gameStartTime` 
           });
         }
       }
 
       // Use first leg's sport/league as primary, earliest game start time
       const primarySport = parlayLegs[0].sport;
-      const primaryLeague = parlayLegs[0].league;
+      const primaryLeague = parlayLegs[0].league || parlayLegs[0].sport; // Use sport as fallback if league not provided
       const earliestGameStart = parlayLegs.reduce((earliest, leg) => {
         const legTime = new Date(leg.gameStartTime);
         return legTime < earliest ? legTime : earliest;
