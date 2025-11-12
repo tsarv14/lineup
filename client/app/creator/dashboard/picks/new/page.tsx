@@ -689,7 +689,7 @@ export default function NewPickPage() {
           return legTime < earliest ? legTime : earliest
         }, new Date(parlayLegs[0].gameStartTime))
 
-        const payload = {
+        const payload: any = {
           sport: parlayLegs[0].sport, // Use first leg's sport as primary
           league: parlayLegs[0].league, // Use first leg's league as primary
           betType: 'parlay',
@@ -697,7 +697,6 @@ export default function NewPickPage() {
           oddsAmerican: parlayOdds.oddsAmerican,
           oddsDecimal: parlayOdds.oddsDecimal,
           unitsRisked: parseFloat(formData.unitsRisked),
-          amountRisked: formData.amountRisked ? Math.round(parseFloat(formData.amountRisked) * 100) : undefined,
           gameStartTime: earliestGameStart.toISOString(),
           writeUp: formData.writeUp || null,
           isFree: formData.isFree,
@@ -705,6 +704,11 @@ export default function NewPickPage() {
           oneOffPriceCents: formData.oneOffPriceCents,
           isParlay: true,
           parlayLegs: parlayLegsData
+        }
+
+        // Only include amountRisked if it's a valid number
+        if (formData.amountRisked && !isNaN(parseFloat(formData.amountRisked))) {
+          payload.amountRisked = Math.round(parseFloat(formData.amountRisked) * 100)
         }
 
         await api.post('/creator/picks', payload)
@@ -786,8 +790,8 @@ export default function NewPickPage() {
         }
 
         await api.post('/creator/picks', payload)
-        toast.success('Pick created successfully!')
-        router.push('/creator/dashboard/picks')
+      toast.success('Pick created successfully!')
+      router.push('/creator/dashboard/picks')
       }
     } catch (error: any) {
       console.error('Create pick error:', error)
@@ -843,10 +847,10 @@ export default function NewPickPage() {
         <div className="lg:col-span-2">
           <form onSubmit={handleSubmit} className="bg-black/40 backdrop-blur-sm rounded-xl border border-slate-800 p-8 space-y-6 shadow-lg shadow-black/20">
             {/* Pick Type Selector */}
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
                 Pick Type *
-              </label>
+          </label>
               <div className="grid grid-cols-2 gap-4">
                 <button
                   type="button"
@@ -1087,8 +1091,8 @@ export default function NewPickPage() {
                           )}
                         </div>
                         {!leg.selectedGame && (
-                          <input
-                            type="text"
+          <input
+            type="text"
                             value={leg.gameText || ''}
                             onChange={(e) => updateParlayLeg(leg.id, { gameText: e.target.value })}
                             placeholder="Or enter manually: e.g., Lakers vs Warriors"
@@ -1200,17 +1204,17 @@ export default function NewPickPage() {
                       type="number"
                       name="unitsRisked"
                       value={formData.unitsRisked}
-                      onChange={handleChange}
-                      required
+            onChange={handleChange}
+            required
                       min="0"
                       step="0.01"
-                      className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600"
+            className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600"
                       placeholder="2.0"
-                    />
-                  </div>
+          />
+        </div>
 
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+        <div className="space-y-2">
+          <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
                       Amount Risked ($)
                     </label>
                     <input
@@ -1242,16 +1246,16 @@ export default function NewPickPage() {
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
                     Write-up (Optional)
-                  </label>
-                  <textarea
+          </label>
+          <textarea
                     name="writeUp"
                     value={formData.writeUp}
-                    onChange={handleChange}
-                    rows={6}
-                    className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all resize-none placeholder:text-gray-600"
+            onChange={handleChange}
+            rows={6}
+            className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all resize-none placeholder:text-gray-600"
                     placeholder="Detailed analysis and reasoning for your parlay..."
-                  />
-                </div>
+          />
+        </div>
 
                 {/* Legacy fields */}
                 <div className="flex items-center space-x-3 pt-4 border-t border-slate-800">
@@ -1340,15 +1344,15 @@ export default function NewPickPage() {
             ) : (
               <>
             {/* Sport and League */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
                   Sport *
-                </label>
+            </label>
                 <select
-                  name="sport"
-                  value={formData.sport}
-                  onChange={handleChange}
+              name="sport"
+              value={formData.sport}
+              onChange={handleChange}
                   required
                   className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all"
                 >
@@ -1366,16 +1370,16 @@ export default function NewPickPage() {
                   <option value="Racing">Racing</option>
                   <option value="Other">Other</option>
                 </select>
-              </div>
+          </div>
 
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
                   League *
-                </label>
-                <select
+            </label>
+            <select
                   name="league"
                   value={formData.league}
-                  onChange={handleChange}
+              onChange={handleChange}
                   required
                   disabled={!formData.sport || availableLeagues.length === 0}
                   className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1401,21 +1405,21 @@ export default function NewPickPage() {
                 value={formData.betType}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all"
-              >
-                <option value="moneyline">Moneyline</option>
+              className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all"
+            >
+              <option value="moneyline">Moneyline</option>
                 <option value="spread">Spread</option>
                 <option value="total">Total (Over/Under)</option>
-                <option value="prop">Prop</option>
+              <option value="prop">Prop</option>
                 <option value="future">Future</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
+              <option value="other">Other</option>
+            </select>
+        </div>
 
             {/* Game Selection - Only for non-futures */}
             {!isFuture && (
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
                   Game *
                 </label>
                 <div className="flex gap-2">
@@ -1427,7 +1431,7 @@ export default function NewPickPage() {
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
+              </svg>
                     {selectedGame 
                       ? `${selectedGame.awayTeam?.name || 'Away'} @ ${selectedGame.homeTeam?.name || 'Home'}` 
                       : 'Search Games'}
@@ -1519,14 +1523,14 @@ export default function NewPickPage() {
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
                 Selection *
-              </label>
-              <input
-                type="text"
+            </label>
+            <input
+              type="text"
                 name="selection"
                 value={formData.selection}
-                onChange={handleChange}
+              onChange={handleChange}
                 required
-                className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600"
+              className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600"
                 placeholder={
                   formData.betType === 'moneyline' ? 'e.g., Win' :
                   formData.betType === 'spread' ? 'e.g., -5.5' :
@@ -1535,21 +1539,21 @@ export default function NewPickPage() {
                   formData.betType === 'future' ? 'e.g., To win Super Bowl' :
                   'e.g., Your selection'
                 }
-              />
-            </div>
+            />
+          </div>
 
             {/* Odds with Market Suggestions */}
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
                 Odds (American) *
-              </label>
+            </label>
               <div className="space-y-2">
                 <div className="flex gap-2">
-                  <input
-                    type="text"
+            <input
+              type="text"
                     name="oddsAmerican"
                     value={formData.oddsAmerican}
-                    onChange={handleChange}
+              onChange={handleChange}
                     required
                     className={`flex-1 px-4 py-3 bg-black/60 border ${
                       oddsValidation?.valid === false 
@@ -1563,10 +1567,10 @@ export default function NewPickPage() {
                   {fetchingOdds && (
                     <div className="flex items-center px-4 bg-slate-800 rounded-lg">
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary-500"></div>
-                    </div>
+          </div>
                   )}
-                </div>
-                
+        </div>
+
                 {/* Market Odds Suggestions */}
                 {availableOdds.length > 0 && (
                   <div className="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
@@ -1602,22 +1606,22 @@ export default function NewPickPage() {
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
                   Game Start Time *
-                </label>
-                <input
-                  type="datetime-local"
+            </label>
+            <input
+              type="datetime-local"
                   name="gameStartTime"
                   value={formData.gameStartTime}
-                  onChange={handleChange}
+              onChange={handleChange}
                   required
                   min={new Date().toISOString().slice(0, 16)}
                   className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all"
-                />
+            />
                 {formData.gameStartTime && (
                   <p className={`text-xs ${isVerified ? 'text-green-400' : 'text-red-400'}`}>
                     {timeBeforeStart}
                   </p>
                 )}
-              </div>
+          </div>
             )}
 
             {/* Units and Amount */}
@@ -1625,25 +1629,25 @@ export default function NewPickPage() {
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
                   Units Risked *
-                </label>
-                <input
+            </label>
+            <input
                   type="number"
                   name="unitsRisked"
                   value={formData.unitsRisked}
-                  onChange={handleChange}
+              onChange={handleChange}
                   required
                   min="0"
                   step="0.01"
                   className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all placeholder:text-gray-600"
                   placeholder="2.0"
                 />
-              </div>
+        </div>
 
               <div className="space-y-2">
                 <label className="flex items-center gap-2 text-sm font-semibold text-gray-300">
                   Amount Risked ($)
-                </label>
-                <input
+          </label>
+          <input
                   type="number"
                   name="amountRisked"
                   value={formData.amountRisked}
@@ -1655,7 +1659,7 @@ export default function NewPickPage() {
                 />
                 <p className="text-xs text-gray-500">Auto-syncs with units</p>
               </div>
-            </div>
+        </div>
 
             {/* Unit Value Display */}
             <div className="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
@@ -1685,89 +1689,89 @@ export default function NewPickPage() {
 
             {/* Legacy fields */}
             <div className="flex items-center space-x-3 pt-4 border-t border-slate-800">
-              <input
-                type="checkbox"
-                name="isFree"
-                checked={formData.isFree}
-                onChange={handleChange}
-                className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-primary-600 focus:ring-primary-500"
-              />
-              <label className="text-sm font-medium text-gray-300">
-                This is a free pick
-              </label>
-            </div>
+          <input
+            type="checkbox"
+            name="isFree"
+            checked={formData.isFree}
+            onChange={handleChange}
+            className="w-5 h-5 rounded bg-slate-700 border-slate-600 text-primary-600 focus:ring-primary-500"
+          />
+          <label className="text-sm font-medium text-gray-300">
+            This is a free pick
+          </label>
+        </div>
 
-            {!formData.isFree && (
-              <>
-                {plans.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+        {!formData.isFree && (
+          <>
+            {plans.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
                       Available for Plans
-                    </label>
+                </label>
                     <div className="space-y-2 bg-slate-800/50 rounded-lg p-4 max-h-48 overflow-y-auto">
-                      {plans.map((plan) => (
+                  {plans.map((plan) => (
                         <label key={plan._id} className="flex items-center space-x-3 cursor-pointer hover:bg-slate-700/50 p-2 rounded">
-                          <input
-                            type="checkbox"
-                            checked={formData.plans.includes(plan._id)}
-                            onChange={() => handlePlanToggle(plan._id)}
-                            className="w-5 h-5 rounded bg-slate-600 border-slate-500 text-primary-600 focus:ring-primary-500"
-                          />
-                          <span className="text-white">{plan.name}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    One-Time Purchase Price ($)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    name="oneOffPriceCents"
-                    value={formData.oneOffPriceCents / 100}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all"
-                    placeholder="0.00"
-                  />
+                      <input
+                        type="checkbox"
+                        checked={formData.plans.includes(plan._id)}
+                        onChange={() => handlePlanToggle(plan._id)}
+                        className="w-5 h-5 rounded bg-slate-600 border-slate-500 text-primary-600 focus:ring-primary-500"
+                      />
+                      <span className="text-white">{plan.name}</span>
+                    </label>
+                  ))}
                 </div>
-              </>
+              </div>
             )}
 
-            <div className="flex items-center gap-4 pt-6 border-t border-slate-800">
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-8 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:shadow-glow hover:shadow-primary-500/30 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed border border-primary-500/50 flex items-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Post Pick
-                  </>
-                )}
-              </button>
-              <Link
-                href="/creator/dashboard/picks"
-                className="px-6 py-3 bg-black/60 text-white rounded-xl hover:bg-black/80 transition-all font-semibold border border-slate-700 hover:border-slate-600"
-              >
-                Cancel
-              </Link>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                One-Time Purchase Price ($)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                name="oneOffPriceCents"
+                value={formData.oneOffPriceCents / 100}
+                onChange={handleChange}
+                    className="w-full px-4 py-3 bg-black/60 border border-slate-700 text-white rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500/50 transition-all"
+                placeholder="0.00"
+              />
             </div>
+          </>
+        )}
+
+               <div className="flex items-center gap-4 pt-6 border-t border-slate-800">
+                 <button
+                   type="submit"
+                   disabled={loading}
+                   className="px-8 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:shadow-glow hover:shadow-primary-500/30 transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed border border-primary-500/50 flex items-center gap-2"
+                 >
+                   {loading ? (
+                     <>
+                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                       Creating...
+                     </>
+                   ) : (
+                     <>
+                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                       </svg>
+                    Post Pick
+                     </>
+                   )}
+                 </button>
+                 <Link
+                   href="/creator/dashboard/picks"
+                   className="px-6 py-3 bg-black/60 text-white rounded-xl hover:bg-black/80 transition-all font-semibold border border-slate-700 hover:border-slate-600"
+                 >
+                   Cancel
+                 </Link>
+               </div>
               </>
             )}
-          </form>
+      </form>
         </div>
 
         {/* Preview Panel */}
