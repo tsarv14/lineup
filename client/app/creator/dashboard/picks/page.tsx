@@ -6,6 +6,19 @@ import api from '@/lib/api'
 import Link from 'next/link'
 import toast from 'react-hot-toast'
 
+interface ParlayLeg {
+  sport: string
+  league?: string
+  gameId?: string
+  gameText?: string
+  selection: string
+  betType: string
+  oddsAmerican: number
+  oddsDecimal: number
+  gameStartTime: string
+  result?: 'pending' | 'win' | 'loss' | 'push' | 'void'
+}
+
 interface Pick {
   _id: string
   title: string
@@ -34,6 +47,10 @@ interface Pick {
   verificationSource?: 'manual' | 'system' | 'api'
   flagged?: boolean
   writeUp?: string
+  // Parlay fields
+  isParlay?: boolean
+  parlayLegs?: ParlayLeg[]
+  parlayResult?: 'pending' | 'win' | 'loss' | 'push' | 'void'
 }
 
 export default function PicksPage() {
