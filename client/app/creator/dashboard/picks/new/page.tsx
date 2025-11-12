@@ -568,7 +568,7 @@ export default function NewPickPage() {
     }
     setParlayLegs([...parlayLegs, newLeg])
     // Expand new leg by default
-    setExpandedLegs(prev => new Set([...prev, newLeg.id]))
+    setExpandedLegs(prev => new Set([...Array.from(prev), newLeg.id]))
   }
 
   const removeParlayLeg = (legId: string) => {
