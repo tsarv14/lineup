@@ -291,6 +291,11 @@ router.get('/picks', async (req, res) => {
 // @access  Private (creator only)
 router.post('/picks', async (req, res) => {
   try {
+    console.log('POST /api/creator/picks - Request received');
+    console.log('Request body keys:', Object.keys(req.body));
+    console.log('isParlay:', req.body.isParlay);
+    console.log('parlayLegs:', req.body.parlayLegs ? `${req.body.parlayLegs.length} legs` : 'none');
+    
     const { 
       // Phase A structured fields
       sport, league, gameId, gameText, betType, selection, oddsAmerican, oddsDecimal,
