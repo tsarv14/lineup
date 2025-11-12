@@ -711,7 +711,9 @@ export default function NewPickPage() {
           payload.amountRisked = Math.round(parseFloat(formData.amountRisked) * 100)
         }
 
-        await api.post('/creator/picks', payload)
+        console.log('Submitting parlay payload:', JSON.stringify(payload, null, 2))
+        const response = await api.post('/creator/picks', payload)
+        console.log('Parlay created successfully:', response.data)
         toast.success('Parlay created successfully!')
         router.push('/creator/dashboard/picks')
       } else {
@@ -795,7 +797,11 @@ export default function NewPickPage() {
       }
     } catch (error: any) {
       console.error('Create pick error:', error)
-      toast.error(error.response?.data?.message || 'Failed to create pick')
+      console.error('Error response:', error.response?.data)
+      console.error('Error status:', error.response?.status)
+      console.error('Error message:', error.message)
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to create pick'
+      toast.error(errorMessage)
     } finally {
       setLoading(false)
     }
